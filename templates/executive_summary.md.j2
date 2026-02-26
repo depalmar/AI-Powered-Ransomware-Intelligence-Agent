@@ -1,0 +1,43 @@
+# Executive Summary — Ransomware Incident
+
+**Incident ID:** {{ data.incident_id }}
+**Date:** {{ data.generated_at.strftime('%Y-%m-%d') }}
+**Classification:** CONFIDENTIAL
+
+---
+
+## Situation
+
+{{ data.executive_summary }}
+
+## Key Findings
+
+- **Attributed Threat Actor:** {{ data.attribution.primary_group }}
+- **Confidence Level:** {{ data.attribution.confidence.confidence_pct }}% ({{ data.attribution.confidence.confidence_label }})
+- **Affected Organization:** {{ data.artifacts.victim.company }}
+- **Industry Sector:** {{ data.artifacts.victim.sector }}
+
+## Impact Assessment
+
+- **Systems Affected:** {{ data.artifacts.lateral_movement | length }} systems observed in lateral movement chain
+- **Data Exfiltration:** {{ "Likely — exfiltration tools detected" if data.artifacts.lolbas else "Unknown — insufficient artifacts" }}
+- **Encrypted Files:** Extension `{{ data.artifacts.file_extension or 'Unknown' }}`
+
+{% if data.negotiation %}
+## Ransom Demand Assessment
+
+- **Estimated Demand Range:** {{ data.negotiation.typical_demand_range }}
+- **Decryptor Viability:** {{ data.negotiation.decryptor_reliability }}
+- **Recommendation:** {{ data.negotiation.recommendation }}
+{% endif %}
+
+## Priority Actions Required
+
+{% for action in data.recommended_actions[:5] %}
+{{ loop.index }}. {{ action }}
+{% endfor %}
+
+---
+
+*Prepared by: Ransomware Intelligence Agent*
+*Distribution: Executive Leadership, Legal, CISO*

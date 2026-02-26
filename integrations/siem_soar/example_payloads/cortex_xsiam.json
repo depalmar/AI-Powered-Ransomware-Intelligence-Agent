@@ -1,0 +1,55 @@
+{
+  "alert_id": "XSIAM-A-20260219-00042",
+  "alert_source": "cortex_xdr",
+  "alert_name": "Ransomware Activity - Data Encryption",
+  "severity": "critical",
+  "category": "Ransomware",
+  "hostname": "SRV-FILE01",
+  "host_name": "SRV-FILE01",
+  "host_ip": "10.1.1.20",
+  "user_name": "DOMAIN\\svc_admin",
+  "description": "Cortex XDR detected ransomware-like file encryption activity originating from a suspicious process.",
+  "action_status": "DETECTED",
+  "action_taken": "ALERT",
+  "mitre_techniques": ["T1486", "T1490", "T1021.001"],
+  "artifacts": [
+    {
+      "type": "sha256",
+      "value": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "description": "Suspicious binary"
+    },
+    {
+      "type": "ip_address",
+      "value": "185.220.101.42",
+      "description": "C2 communication"
+    },
+    {
+      "type": "ip_address",
+      "value": "91.243.44.178",
+      "description": "Data exfiltration endpoint"
+    }
+  ],
+  "causality_chain": [
+    {
+      "process_name": "outlook.exe",
+      "action": "spawned",
+      "child": "cmd.exe"
+    },
+    {
+      "process_name": "cmd.exe",
+      "action": "spawned",
+      "child": "powershell.exe"
+    },
+    {
+      "process_name": "powershell.exe",
+      "action": "downloaded",
+      "child": "svchost.exe"
+    },
+    {
+      "process_name": "svchost.exe",
+      "action": "encrypted_files",
+      "child": null
+    }
+  ],
+  "timestamp": "2026-02-19T02:14:00Z"
+}

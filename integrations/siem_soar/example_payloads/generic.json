@@ -1,0 +1,25 @@
+{
+  "alert_id": "ALERT-20260219-001",
+  "source": "generic",
+  "severity": "critical",
+  "description": "Ransomware indicators detected on SRV-FILE01",
+  "hostname": "SRV-FILE01",
+  "victim_company": "Acme Corp",
+  "victim_sector": "Manufacturing",
+  "hashes": [
+    "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+  ],
+  "ips": [
+    "185.220.101.42",
+    "91.243.44.178"
+  ],
+  "domains": [],
+  "ransom_note_text": "YOUR FILES HAVE BEEN ENCRYPTED. Contact us at...",
+  "file_extension": ".locked",
+  "observed_ttps": [
+    "RDP lateral movement",
+    "vssadmin shadow copy deletion",
+    "schtasks persistence"
+  ]
+}
