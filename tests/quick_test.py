@@ -97,18 +97,18 @@ async def run_checks() -> list[tuple[str, bool, str]]:
             # Group profile
             profile = await free.get_group("lockbit3")
             results.append((
-                "Free API: /group/lockbit3",
+                "Free API: /groups/lockbit3",
                 profile is not None,
                 profile.name if profile else "Not found",
             ))
 
             # Recent victims
             victims = await free.get_recent_victims()
-            results.append(("Free API: /recentvictims", len(victims) > 0, f"{len(victims)} victims"))
+            results.append(("Free API: /victims/recent", len(victims) > 0, f"{len(victims)} victims"))
 
             # Victim search
             search = await free.search_victims("bank")
-            results.append(("Free API: /searchvictims", isinstance(search, list), f"{len(search)} results"))
+            results.append(("Free API: /victims/search", isinstance(search, list), f"{len(search)} results"))
 
             # YARA rules
             yara = await free.get_group_yara("lockbit3")
@@ -146,7 +146,7 @@ async def run_checks() -> list[tuple[str, bool, str]]:
                 # Ransom note text
                 note = await pro.get_ransom_note_text("lockbit3")
                 results.append((
-                    "PRO API: /ransomnotestext/lockbit3",
+                    "PRO API: /ransomnotes/lockbit3",
                     len(note) > 0,
                     f"{len(note)} chars" if note else "Empty",
                 ))

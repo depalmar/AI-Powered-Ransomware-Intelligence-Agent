@@ -13,7 +13,8 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     # Ransomware.live API
-    ransomware_live_api_base: str = "https://api.ransomware.live"
+    ransomware_live_api_base: str = "https://api.ransomware.live/v2"
+    ransomware_live_pro_api_base: str = "https://api-pro.ransomware.live"
     ransomware_live_pro_key: str = ""
 
     # Ollama (embeddings + local LLM)

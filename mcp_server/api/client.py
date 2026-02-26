@@ -42,7 +42,7 @@ class APIClient:
     Usage::
 
         async with APIClient() as client:
-            data = await client.get("/api/groups")
+            data = await client.get("/groups")
     """
 
     def __init__(
@@ -52,9 +52,15 @@ class APIClient:
         timeout: float | None = None,
         max_retries: int | None = None,
     ) -> None:
-        self.base_url = (base_url or settings.ransomware_live_api_base).rstrip("/")
         # Use explicit key if provided (even empty), otherwise fall back to config
         self.pro_key = pro_key if pro_key is not None else settings.ransomware_live_pro_key
+        # Auto-select base URL: PRO API if key is available, otherwise free v2
+        if base_url:
+            self.base_url = base_url.rstrip("/")
+        elif self.pro_key and self.pro_key not in ("your_pro_api_key_here",):
+            self.base_url = settings.ransomware_live_pro_api_base.rstrip("/")
+        else:
+            self.base_url = settings.ransomware_live_api_base.rstrip("/")
         self.timeout = timeout or settings.api_timeout_seconds
         self.max_retries = max_retries if max_retries is not None else settings.api_max_retries
         self._rate_limiter = RateLimiter(settings.api_rate_limit_per_second)
@@ -100,7 +106,7 @@ class APIClient:
         """Make a GET request with rate limiting and retries.
 
         Args:
-            path: API endpoint path (e.g. "/api/groups").
+            path: API endpoint path (e.g. "/groups").
             params: Optional query parameters.
 
         Returns:
@@ -117,6 +123,16 @@ class APIClient:
             try:
                 response = await client.get(path, params=params)
                 response.raise_for_status()
+                content_type = response.headers.get("content-type", "")
+                if "application/json" not in content_type:
+                    logger.warning(
+                        "Non-JSON response for %s (content-type: %s, url: %s)",
+                        path, content_type, response.url,
+                    )
+                    raise APIError(
+                        f"Expected JSON but got {content_type} for {path} "
+                        f"(final url: {response.url})",
+                    )
                 return response.json()
             except httpx.HTTPStatusError as exc:
                 status = exc.response.status_code

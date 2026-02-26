@@ -33,7 +33,7 @@ class FreeAPI:
         Returns:
             List of group data dicts.
         """
-        result = await self._client.get("/api/groups")
+        result = await self._client.get("/groups")
         return result if isinstance(result, list) else []
 
     async def get_group(self, name: str) -> GroupProfile | None:
@@ -45,7 +45,7 @@ class FreeAPI:
         Returns:
             GroupProfile or None if not found.
         """
-        data = await self._client.get_or_none(f"/api/group/{name}")
+        data = await self._client.get_or_none(f"/groups/{name}")
         if not data:
             return None
         # API may return a list with one item or a dict
@@ -74,7 +74,7 @@ class FreeAPI:
         Returns:
             List of matching victim records.
         """
-        data = await self._client.get_or_none(f"/api/searchvictims/{keyword}")
+        data = await self._client.get_or_none("/victims/search", params={"query": keyword})
         if not data:
             return []
         return [self._parse_victim(v) for v in data]
@@ -88,7 +88,7 @@ class FreeAPI:
         Returns:
             List of victim records in that sector.
         """
-        data = await self._client.get_or_none(f"/api/sectorvictims/{sector}")
+        data = await self._client.get_or_none("/victims/", params={"sector": sector})
         if not data:
             return []
         return [self._parse_victim(v) for v in data]
@@ -103,7 +103,7 @@ class FreeAPI:
         Returns:
             List of victim records for that period.
         """
-        data = await self._client.get_or_none(f"/api/victims/{year}/{month}")
+        data = await self._client.get_or_none("/victims/", params={"year": year, "month": month})
         if not data:
             return []
         return [self._parse_victim(v) for v in data]
@@ -114,7 +114,7 @@ class FreeAPI:
         Returns:
             List of recent victim records.
         """
-        data = await self._client.get_or_none("/api/recentvictims")
+        data = await self._client.get_or_none("/victims/recent")
         if not data:
             return []
         return [self._parse_victim(v) for v in data]
@@ -132,7 +132,7 @@ class FreeAPI:
         Returns:
             List of YARA rules.
         """
-        data = await self._client.get_or_none(f"/api/yara/{group_name}")
+        data = await self._client.get_or_none(f"/yara/{group_name}")
         if not data:
             return []
         rules = data if isinstance(data, list) else [data]

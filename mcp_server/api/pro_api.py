@@ -53,7 +53,7 @@ class ProAPI:
         """
         if not self._has_key("ransomnotestext"):
             return ""
-        data = await self._client.get_or_none(f"/api/ransomnotestext/{group_name}")
+        data = await self._client.get_or_none(f"/ransomnotes/{group_name}")
         if not data:
             return ""
         if isinstance(data, list) and data:
@@ -70,7 +70,7 @@ class ProAPI:
         """
         if not self._has_key("ransomnotestext"):
             return {}
-        data = await self._client.get_or_none("/api/ransomnotestext")
+        data = await self._client.get_or_none("/ransomnotes")
         if not data:
             return {}
         notes: dict[str, str] = {}
@@ -97,7 +97,7 @@ class ProAPI:
         """
         if not self._has_key("iocs"):
             return []
-        data = await self._client.get_or_none(f"/api/iocs/{group_name}")
+        data = await self._client.get_or_none(f"/iocs/{group_name}")
         if not data:
             return []
         records = data if isinstance(data, list) else [data]
@@ -127,10 +127,16 @@ class ProAPI:
         """
         if not self._has_key("ttps"):
             return []
-        data = await self._client.get_or_none(f"/api/ttps/{group_name}")
+        # TTPs may be embedded in the group profile from /groups/{name}
+        data = await self._client.get_or_none(f"/groups/{group_name}")
         if not data:
             return []
-        records = data if isinstance(data, list) else [data]
+        # Extract TTPs from group data if present
+        record = data[0] if isinstance(data, list) else data
+        ttp_data = record.get("ttps", record.get("mitre_attack", []))
+        if not ttp_data:
+            return []
+        records = ttp_data if isinstance(ttp_data, list) else [ttp_data]
         return [
             GroupTTP(
                 tactic=r.get("tactic", ""),
@@ -156,7 +162,7 @@ class ProAPI:
         """
         if not self._has_key("negotiations"):
             return []
-        data = await self._client.get_or_none(f"/api/negotiations/{group_name}")
+        data = await self._client.get_or_none(f"/negotiations/{group_name}")
         if not data:
             return []
         records = data if isinstance(data, list) else [data]
@@ -192,12 +198,7 @@ class ProAPI:
             return []
 
         # Build the endpoint path based on filters
-        if ticker:
-            path = f"/api/8k/ticker/{ticker}"
-        elif cik:
-            path = f"/api/8k/cik/{cik}"
-        else:
-            path = "/api/8k"
+        path = "/8k"
 
         data = await self._client.get_or_none(path)
         if not data:
