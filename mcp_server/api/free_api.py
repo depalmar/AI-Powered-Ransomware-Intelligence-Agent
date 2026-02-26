@@ -90,7 +90,8 @@ class FreeAPI:
         data = await self._client.get_or_none(f"/victims/search/{keyword}")
         if not data:
             return []
-        return [r for v in data if (r := self._parse_victim(v)) is not None]
+        items = self._unwrap_list(data)
+        return [r for v in items if (r := self._parse_victim(v)) is not None]
 
     async def get_sector_victims(self, sector: str) -> list[VictimRecord]:
         """Get victims filtered by sector.
@@ -104,7 +105,8 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/", params={"sector": sector})
         if not data:
             return []
-        return [r for v in data if (r := self._parse_victim(v)) is not None]
+        items = self._unwrap_list(data)
+        return [r for v in items if (r := self._parse_victim(v)) is not None]
 
     async def get_victims_by_month(self, year: int, month: int) -> list[VictimRecord]:
         """Get victims for a specific month.
@@ -119,7 +121,8 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/", params={"year": year, "month": month})
         if not data:
             return []
-        return [r for v in data if (r := self._parse_victim(v)) is not None]
+        items = self._unwrap_list(data)
+        return [r for v in items if (r := self._parse_victim(v)) is not None]
 
     async def get_recent_victims(self) -> list[VictimRecord]:
         """Get the most recent victims across all groups.
@@ -130,7 +133,8 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/recent")
         if not data:
             return []
-        return [r for v in data if (r := self._parse_victim(v)) is not None]
+        items = self._unwrap_list(data)
+        return [r for v in items if (r := self._parse_victim(v)) is not None]
 
     # ------------------------------------------------------------------
     # YARA
@@ -161,6 +165,25 @@ class FreeAPI:
     # ------------------------------------------------------------------
     # Helpers
     # ------------------------------------------------------------------
+
+    @staticmethod
+    def _unwrap_list(data: Any) -> list:
+        """Unwrap API response into a list of items.
+
+        Handles both direct lists and dict-wrapped responses.
+        """
+        if isinstance(data, list):
+            return data
+        if isinstance(data, dict):
+            # Check for common wrapper keys
+            for key in ("data", "results", "victims", "items"):
+                if key in data and isinstance(data[key], list):
+                    return data[key]
+            # If values look like victim records, return them
+            first_val = next(iter(data.values()), None) if data else None
+            if isinstance(first_val, dict):
+                return list(data.values())
+        return []
 
     @staticmethod
     def _parse_victim(data: Any) -> VictimRecord | None:
