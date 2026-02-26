@@ -87,14 +87,16 @@ async def run_checks() -> list[tuple[str, bool, str]]:
     from mcp_server.api.free_api import FreeAPI
 
     try:
-        async with APIClient() as client:
+        async with APIClient(timeout=120.0) as client:
             free = FreeAPI(client)
 
             # Groups
+            console.print("  [dim]Fetching /groups...[/dim]")
             groups = await free.get_groups()
             results.append(("Free API: /groups", len(groups) > 0, f"{len(groups)} groups"))
 
             # Group profile
+            console.print("  [dim]Fetching /groups/lockbit3...[/dim]")
             profile = await free.get_group("lockbit3")
             results.append((
                 "Free API: /groups/lockbit3",
@@ -102,15 +104,18 @@ async def run_checks() -> list[tuple[str, bool, str]]:
                 profile.name if profile else "Not found",
             ))
 
-            # Recent victims
+            # Recent victims (can be large, use longer timeout)
+            console.print("  [dim]Fetching /victims/recent (may take a moment)...[/dim]")
             victims = await free.get_recent_victims()
             results.append(("Free API: /victims/recent", len(victims) > 0, f"{len(victims)} victims"))
 
             # Victim search
+            console.print("  [dim]Fetching /victims/search...[/dim]")
             search = await free.search_victims("bank")
             results.append(("Free API: /victims/search", isinstance(search, list), f"{len(search)} results"))
 
             # YARA rules
+            console.print("  [dim]Fetching /yara/lockbit3...[/dim]")
             yara = await free.get_group_yara("lockbit3")
             results.append(("Free API: /yara/lockbit3", isinstance(yara, list), f"{len(yara)} rules"))
 
@@ -124,7 +129,7 @@ async def run_checks() -> list[tuple[str, bool, str]]:
         from mcp_server.api.pro_api import ProAPI
 
         try:
-            async with APIClient() as client:
+            async with APIClient(timeout=120.0) as client:
                 pro = ProAPI(client)
 
                 # IOCs
