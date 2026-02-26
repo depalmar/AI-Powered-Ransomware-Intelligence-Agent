@@ -2,15 +2,15 @@
 
 ## Overview
 
-REST API webhook endpoint that accepts alert payloads from SIEMs and SOAR platforms, extracts ransomware artifacts, and returns intelligence enrichment.
+REST API webhook endpoint that accepts alert payloads from open-source SIEMs and SOAR platforms, extracts ransomware artifacts, and returns intelligence enrichment.
 
 ## Supported Formats
 
 | Platform | Auto-detect | Example Payload |
 |---|---|---|
 | Generic JSON | Yes | `example_payloads/generic.json` |
-| Splunk | Yes | `example_payloads/splunk.json` |
-| Cortex XSIAM | Yes | `example_payloads/cortex_xsiam.json` |
+| Wazuh | Yes | `example_payloads/wazuh.json` |
+| Elastic / OpenSearch | Yes | `example_payloads/elastic.json` |
 
 ## Setup
 
@@ -37,28 +37,42 @@ curl -X POST http://localhost:8080/api/v1/enrich \
   -d @integrations/siem_soar/example_payloads/generic.json
 ```
 
-### Example: Raw Splunk Alert
+### Example: Wazuh Alert
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/enrich/raw \
   -H "Content-Type: application/json" \
-  -d @integrations/siem_soar/example_payloads/splunk.json
+  -d @integrations/siem_soar/example_payloads/wazuh.json
+```
+
+### Example: Elastic / OpenSearch Alert
+
+```bash
+curl -X POST http://localhost:8080/api/v1/enrich/raw \
+  -H "Content-Type: application/json" \
+  -d @integrations/siem_soar/example_payloads/elastic.json
 ```
 
 ## SOAR Playbook Integration
 
-### Splunk SOAR (Phantom)
-Configure an HTTP action in your playbook:
+### Shuffle (Open-Source SOAR)
+Configure an HTTP action in your Shuffle workflow:
 - **Action**: HTTP POST
 - **URL**: `http://ransomware-intel:8080/api/v1/enrich/raw`
-- **Body**: `{{ container.raw_json }}`
+- **Body**: Pass the raw alert JSON from the trigger
 - **Parse response** and use enrichment in downstream actions
 
-### Cortex XSIAM / XSOAR
-Configure an HTTP integration:
+### TheHive / Cortex Analyzers
+Configure as a Cortex responder or analyzer:
 - **Base URL**: `http://ransomware-intel:8080`
 - **Endpoint**: `/api/v1/enrich`
-- Map alert fields to the generic payload schema
+- Map TheHive observable fields to the generic payload schema
+
+### Wazuh Active Response
+Configure a custom active response script that POSTs high-severity alerts:
+- Trigger on rule levels >= 12 (ransomware rules)
+- POST to `http://ransomware-intel:8080/api/v1/enrich/raw`
+- Log the enrichment response for analyst review
 
 ## Response Format
 

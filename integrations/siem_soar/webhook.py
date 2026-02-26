@@ -4,7 +4,7 @@ Provides a REST API that accepts alert payloads from SIEMs and SOAR
 platforms, extracts artifacts, runs the agent, and returns enrichment.
 
 Supports generic JSON format as well as specific formats for common
-platforms (Splunk, Cortex XSIAM).
+open-source platforms (Wazuh, Elastic/OpenSearch).
 
 Usage:
     uvicorn integrations.siem_soar.webhook:app --host 0.0.0.0 --port 8080
@@ -47,7 +47,10 @@ app = FastAPI(
 class AlertPayload(BaseModel):
     """Generic alert payload accepted by the webhook."""
     alert_id: str = Field(default="", description="Alert identifier from the SIEM")
-    source: str = Field(default="generic", description="Alert source (splunk, cortex, generic)")
+    source: str = Field(
+        default="generic",
+        description="Alert source (wazuh, elastic, generic)",
+    )
     severity: str = Field(default="", description="Alert severity level")
     description: str = Field(default="", description="Alert description")
     hostname: str = Field(default="", description="Affected hostname")
@@ -152,10 +155,12 @@ async def health_check() -> dict[str, str]:
 
 def _detect_source(body: dict[str, Any]) -> str:
     """Try to auto-detect the SIEM source from the payload structure."""
-    if "result" in body and "search_name" in body:
-        return "splunk"
-    if "alert_id" in body and "alert_source" in body:
-        return "cortex"
+    # Wazuh alerts have a "rule" object and "agent" object
+    if "rule" in body and "agent" in body:
+        return "wazuh"
+    # Elastic Security alerts use the ECS format with "event" and "kibana" keys
+    if "event" in body and ("kibana" in body or "signal" in body or "_source" in body):
+        return "elastic"
     return "generic"
 
 
@@ -165,54 +170,108 @@ def _parse_platform_payload(payload: AlertPayload) -> AlertPayload:
     if not raw:
         return payload
 
-    if payload.source == "splunk":
-        return _parse_splunk(payload, raw)
-    elif payload.source == "cortex":
-        return _parse_cortex(payload, raw)
+    if payload.source == "wazuh":
+        return _parse_wazuh(payload, raw)
+    elif payload.source == "elastic":
+        return _parse_elastic(payload, raw)
     return payload
 
 
-def _parse_splunk(payload: AlertPayload, raw: dict[str, Any]) -> AlertPayload:
-    """Parse Splunk alert payload."""
-    result = raw.get("result", {})
-    payload.alert_id = payload.alert_id or raw.get("sid", "")
-    payload.description = raw.get("search_name", "")
-    payload.hostname = result.get("host", result.get("src_host", ""))
+def _parse_wazuh(payload: AlertPayload, raw: dict[str, Any]) -> AlertPayload:
+    """Parse Wazuh alert payload.
 
-    # Extract IOCs from Splunk fields
-    for field in ["file_hash", "sha256", "md5", "hash"]:
-        if result.get(field):
-            payload.hashes.append(result[field])
+    Wazuh alerts follow a standard structure with rule, agent, and data fields.
+    Reference: https://documentation.wazuh.com/current/user-manual/ruleset/rules.html
+    """
+    rule = raw.get("rule", {})
+    agent = raw.get("agent", {})
+    data = raw.get("data", {})
+    syscheck = raw.get("syscheck", {})
 
-    for field in ["src_ip", "dest_ip", "remote_ip"]:
-        if result.get(field):
-            payload.ips.append(result[field])
+    payload.alert_id = payload.alert_id or str(raw.get("id", ""))
+    payload.severity = str(rule.get("level", ""))
+    payload.description = rule.get("description", "")
+    payload.hostname = agent.get("name", agent.get("ip", ""))
 
-    for field in ["domain", "dest_host", "url_domain"]:
-        if result.get(field):
-            payload.domains.append(result[field])
-
-    return payload
-
-
-def _parse_cortex(payload: AlertPayload, raw: dict[str, Any]) -> AlertPayload:
-    """Parse Cortex XSIAM alert payload."""
-    payload.alert_id = payload.alert_id or raw.get("alert_id", "")
-    payload.severity = raw.get("severity", "")
-    payload.description = raw.get("alert_name", raw.get("description", ""))
-    payload.hostname = raw.get("hostname", raw.get("host_name", ""))
-
-    # Extract IOCs
-    artifacts = raw.get("artifacts", [])
-    for artifact in artifacts:
-        art_type = artifact.get("type", "")
-        value = artifact.get("value", "")
-        if art_type in ("hash", "sha256", "md5"):
+    # Extract hashes from syscheck (file integrity monitoring)
+    for field in ["sha256_after", "sha256", "md5_after", "md5"]:
+        value = syscheck.get(field, "")
+        if value:
             payload.hashes.append(value)
-        elif art_type in ("ip", "ip_address"):
+
+    # Extract hashes from data fields
+    for field in ["file_hash", "sha256", "md5", "hash"]:
+        if data.get(field):
+            payload.hashes.append(data[field])
+
+    # Extract network IOCs from data
+    for field in ["srcip", "dstip", "src_ip", "dst_ip"]:
+        value = data.get(field, "")
+        if value and not value.startswith(("10.", "172.", "192.168.", "127.")):
             payload.ips.append(value)
-        elif art_type == "domain":
-            payload.domains.append(value)
+
+    # MITRE ATT&CK IDs from Wazuh rule metadata
+    mitre = rule.get("mitre", {})
+    technique_ids = mitre.get("id", [])
+    if isinstance(technique_ids, list):
+        payload.observed_ttps.extend(technique_ids)
+
+    return payload
+
+
+def _parse_elastic(payload: AlertPayload, raw: dict[str, Any]) -> AlertPayload:
+    """Parse Elastic Security / OpenSearch alert payload.
+
+    Supports Elastic Common Schema (ECS) format used by Elastic Security
+    and OpenSearch Security Analytics.
+    Reference: https://www.elastic.co/guide/en/ecs/current/index.html
+    """
+    # Handle both direct alert and _source wrapper
+    source = raw.get("_source", raw)
+    event = source.get("event", {})
+    host = source.get("host", {})
+    process = source.get("process", {})
+    file_info = source.get("file", {})
+    network = source.get("destination", {})
+    signal = source.get("signal", source.get("kibana.alert", {}))
+    threat = source.get("threat", {})
+
+    payload.alert_id = payload.alert_id or source.get("_id", event.get("id", ""))
+    payload.severity = str(event.get("severity", signal.get("severity", "")))
+    payload.description = signal.get("rule", {}).get("name", event.get("reason", ""))
+    payload.hostname = host.get("name", host.get("hostname", ""))
+
+    # Extract file hashes (ECS file.hash.*)
+    file_hash = file_info.get("hash", {})
+    for algo in ["sha256", "sha1", "md5"]:
+        value = file_hash.get(algo, "")
+        if value:
+            payload.hashes.append(value)
+
+    # Extract process hash
+    proc_hash = process.get("hash", {})
+    for algo in ["sha256", "sha1", "md5"]:
+        value = proc_hash.get(algo, "")
+        if value:
+            payload.hashes.append(value)
+
+    # Extract network IOCs (ECS destination.ip, source.ip)
+    for section in ["destination", "source"]:
+        ip = source.get(section, {}).get("ip", "")
+        if ip and not ip.startswith(("10.", "172.", "192.168.", "127.")):
+            payload.ips.append(ip)
+
+    domain = source.get("destination", {}).get("domain", "")
+    if domain:
+        payload.domains.append(domain)
+
+    # Extract MITRE ATT&CK from threat.technique
+    techniques = threat.get("technique", [])
+    if isinstance(techniques, list):
+        for tech in techniques:
+            tid = tech.get("id", "")
+            if tid:
+                payload.observed_ttps.append(tid)
 
     return payload
 

@@ -1,0 +1,42 @@
+{
+  "id": "1708300800.123456",
+  "timestamp": "2026-02-19T02:14:00+0000",
+  "rule": {
+    "id": "100200",
+    "level": 12,
+    "description": "Ransomware indicators detected — file encryption activity",
+    "groups": ["ransomware", "attack"],
+    "mitre": {
+      "id": ["T1486", "T1490", "T1021.001"],
+      "tactic": ["Impact", "Lateral Movement"],
+      "technique": ["Data Encrypted for Impact", "Inhibit System Recovery", "Remote Desktop Protocol"]
+    }
+  },
+  "agent": {
+    "id": "012",
+    "name": "SRV-FILE01",
+    "ip": "10.1.1.20"
+  },
+  "manager": {
+    "name": "wazuh-manager"
+  },
+  "data": {
+    "srcip": "10.1.1.50",
+    "dstip": "185.220.101.42",
+    "file_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "process_name": "svchost.exe",
+    "process_path": "C:\\ProgramData\\svchost.exe",
+    "parent_process": "cmd.exe"
+  },
+  "syscheck": {
+    "path": "C:\\ProgramData\\svchost.exe",
+    "sha256_after": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2",
+    "md5_after": "d41d8cd98f00b204e9800998ecf8427e",
+    "event": "added",
+    "size_after": "2458624"
+  },
+  "decoder": {
+    "name": "syscheck_integrity_changed"
+  },
+  "location": "syscheck"
+}
