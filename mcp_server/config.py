@@ -41,13 +41,15 @@ class Settings(BaseSettings):
 
     @property
     def has_pro_api(self) -> bool:
-        """Check if a PRO API key is configured."""
-        return bool(self.ransomware_live_pro_key)
+        """Check if a real PRO API key is configured (not a placeholder)."""
+        key = self.ransomware_live_pro_key
+        return bool(key) and key not in ("your_pro_api_key_here", "")
 
     @property
     def has_anthropic(self) -> bool:
-        """Check if an Anthropic API key is configured."""
-        return bool(self.anthropic_api_key)
+        """Check if a real Anthropic API key is configured (not a placeholder)."""
+        key = self.anthropic_api_key
+        return bool(key) and key not in ("your_key_here", "")
 
 
 # Singleton instance — import this in other modules

@@ -53,7 +53,8 @@ class APIClient:
         max_retries: int | None = None,
     ) -> None:
         self.base_url = (base_url or settings.ransomware_live_api_base).rstrip("/")
-        self.pro_key = pro_key or settings.ransomware_live_pro_key
+        # Use explicit key if provided (even empty), otherwise fall back to config
+        self.pro_key = pro_key if pro_key is not None else settings.ransomware_live_pro_key
         self.timeout = timeout or settings.api_timeout_seconds
         self.max_retries = max_retries if max_retries is not None else settings.api_max_retries
         self._rate_limiter = RateLimiter(settings.api_rate_limit_per_second)
@@ -78,7 +79,8 @@ class APIClient:
             "Accept": "application/json",
             "User-Agent": "ransomware-intel-agent/0.1.0",
         }
-        if self.pro_key:
+        # Only send the key if it's a real value, not a placeholder
+        if self.pro_key and self.pro_key not in ("your_pro_api_key_here",):
             headers["api-key"] = self.pro_key
         return headers
 
