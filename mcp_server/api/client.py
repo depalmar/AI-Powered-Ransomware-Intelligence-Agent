@@ -88,7 +88,7 @@ class APIClient:
         }
         # Only send the key if it's a real value, not a placeholder
         if self.pro_key and self.pro_key not in ("your_pro_api_key_here",):
-            headers["api-key"] = self.pro_key
+            headers["X-API-KEY"] = self.pro_key
         return headers
 
     async def _ensure_client(self) -> httpx.AsyncClient:

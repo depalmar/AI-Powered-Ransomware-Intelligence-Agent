@@ -52,13 +52,13 @@ class TestAPIClient:
     def test_build_headers_without_key(self):
         client = APIClient(pro_key="")
         headers = client._build_headers()
-        assert "api-key" not in headers
+        assert "X-API-KEY" not in headers
         assert headers["Accept"] == "application/json"
 
     def test_build_headers_with_key(self):
         client = APIClient(pro_key="my-pro-key")
         headers = client._build_headers()
-        assert headers["api-key"] == "my-pro-key"
+        assert headers["X-API-KEY"] == "my-pro-key"
 
 
 class TestAPIError:
