@@ -65,6 +65,7 @@ class APIClient:
             base_url=self.base_url,
             timeout=self.timeout,
             headers=self._build_headers(),
+            follow_redirects=True,
         )
         return self
 
@@ -91,6 +92,7 @@ class APIClient:
                 base_url=self.base_url,
                 timeout=self.timeout,
                 headers=self._build_headers(),
+                follow_redirects=True,
             )
         return self._client
 
