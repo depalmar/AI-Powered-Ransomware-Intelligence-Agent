@@ -90,7 +90,7 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/search", params={"query": keyword})
         if not data:
             return []
-        return [self._parse_victim(v) for v in data]
+        return [r for v in data if (r := self._parse_victim(v)) is not None]
 
     async def get_sector_victims(self, sector: str) -> list[VictimRecord]:
         """Get victims filtered by sector.
@@ -104,7 +104,7 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/", params={"sector": sector})
         if not data:
             return []
-        return [self._parse_victim(v) for v in data]
+        return [r for v in data if (r := self._parse_victim(v)) is not None]
 
     async def get_victims_by_month(self, year: int, month: int) -> list[VictimRecord]:
         """Get victims for a specific month.
@@ -119,7 +119,7 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/", params={"year": year, "month": month})
         if not data:
             return []
-        return [self._parse_victim(v) for v in data]
+        return [r for v in data if (r := self._parse_victim(v)) is not None]
 
     async def get_recent_victims(self) -> list[VictimRecord]:
         """Get the most recent victims across all groups.
@@ -130,7 +130,7 @@ class FreeAPI:
         data = await self._client.get_or_none("/victims/recent")
         if not data:
             return []
-        return [self._parse_victim(v) for v in data]
+        return [r for v in data if (r := self._parse_victim(v)) is not None]
 
     # ------------------------------------------------------------------
     # YARA
@@ -163,8 +163,10 @@ class FreeAPI:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _parse_victim(data: dict[str, Any]) -> VictimRecord:
+    def _parse_victim(data: Any) -> VictimRecord | None:
         """Parse a raw victim dict into a VictimRecord."""
+        if not isinstance(data, dict):
+            return None
         return VictimRecord(
             group=data.get("group_name", data.get("group", "")),
             victim=data.get("post_title", data.get("victim", data.get("name", ""))),
