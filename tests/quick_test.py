@@ -127,10 +127,6 @@ async def run_checks() -> list[tuple[str, bool, str]]:
             async with APIClient() as client:
                 pro = ProAPI(client)
 
-                # TTPs
-                ttps = await pro.get_group_ttps("lockbit3")
-                results.append(("PRO API: /ttps/lockbit3", len(ttps) > 0, f"{len(ttps)} TTPs"))
-
                 # IOCs
                 iocs = await pro.get_group_iocs("lockbit3")
                 results.append(("PRO API: /iocs/lockbit3", isinstance(iocs, list), f"{len(iocs)} IOCs"))

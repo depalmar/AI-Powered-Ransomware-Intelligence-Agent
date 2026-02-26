@@ -132,7 +132,7 @@ class GroupProfile(BaseModel):
     url: str = ""
     first_seen: str = ""
     last_seen: str = ""
-    locations: list[str] = Field(default_factory=list)
+    locations: list[Any] = Field(default_factory=list)
     profiles: list[dict[str, Any]] = Field(default_factory=list)
     meta: str | None = None
 

@@ -8,10 +8,6 @@ import logging
 import re
 from typing import Any
 
-from mcp_server.api.client import APIClient
-from mcp_server.api.free_api import FreeAPI
-from mcp_server.api.pro_api import ProAPI
-from mcp_server.models import GroupTTP
 
 logger = logging.getLogger("ransomware_intel.tools.ttp_correlation")
 
@@ -84,21 +80,68 @@ def map_observations_to_mitre(observations: list[str]) -> list[str]:
     return sorted(mitre_ids)
 
 
+# Known TTP profiles for major ransomware groups (MITRE ATT&CK technique IDs).
+# Used for offline correlation when no live TTP API is available.
+GROUP_TTP_PROFILES: dict[str, set[str]] = {
+    "lockbit3": {
+        "T1021.001", "T1021.002", "T1047", "T1053.005", "T1059.001",
+        "T1486", "T1490", "T1567.002", "T1003.001", "T1190",
+        "T1569.002", "T1218.011", "T1489",
+    },
+    "alphv": {
+        "T1021.001", "T1047", "T1059.001", "T1486", "T1490",
+        "T1003.001", "T1190", "T1055", "T1574.002", "T1218",
+    },
+    "blackbasta": {
+        "T1021.001", "T1021.002", "T1059.001", "T1486", "T1490",
+        "T1567.002", "T1003.001", "T1566.001", "T1071.001",
+    },
+    "clop": {
+        "T1190", "T1486", "T1567", "T1059.001", "T1041",
+        "T1105", "T1490",
+    },
+    "royal": {
+        "T1021.001", "T1059.001", "T1486", "T1490", "T1566.001",
+        "T1003.001", "T1071.001", "T1197",
+    },
+    "play": {
+        "T1021.001", "T1021.002", "T1486", "T1490", "T1059.001",
+        "T1003.001", "T1047", "T1569.002",
+    },
+    "akira": {
+        "T1021.001", "T1190", "T1486", "T1490", "T1059.001",
+        "T1567.002", "T1003.001",
+    },
+    "rhysida": {
+        "T1021.001", "T1059.001", "T1486", "T1490", "T1003.001",
+        "T1566.001",
+    },
+    "bianlian": {
+        "T1021.001", "T1190", "T1567.002", "T1059.001", "T1003.001",
+        "T1041",
+    },
+    "medusa": {
+        "T1021.001", "T1486", "T1490", "T1059.001", "T1190",
+        "T1003.001", "T1567",
+    },
+}
+
+
 async def correlate_ttps(
     observed_ttps: list[str],
     candidate_groups: list[str] | None = None,
     top_k: int = 5,
 ) -> dict[str, Any]:
-    """Correlate observed TTPs against known group TTPs.
+    """Correlate observed TTPs against known group TTP profiles.
 
     Maps observed techniques (descriptions, LOLBAS, MITRE IDs) against
-    the ATT&CK mappings of all candidate groups, returning ranked matches.
+    known group TTP profiles, returning ranked matches.
 
     Args:
         observed_ttps: List of TTP descriptions, technique IDs, or
             LOLBAS observations from the incident.
         candidate_groups: Optional list of groups to check. If None,
-            queries all known groups.
+            checks all groups with known TTP profiles.
         top_k: Number of top-matching groups to return.
 
     Returns:
@@ -109,63 +152,45 @@ async def correlate_ttps(
     """
     # Map observations to MITRE IDs
     mitre_ids = map_observations_to_mitre(observed_ttps)
+    mitre_set = set(mitre_ids)
     logger.info("Mapped %d observations to %d MITRE techniques", len(observed_ttps), len(mitre_ids))
 
-    async with APIClient() as client:
-        free = FreeAPI(client)
-        pro = ProAPI(client)
+    if not mitre_ids:
+        return {"mitre_ids": [], "group_scores": [], "top_match": None}
 
-        # Determine groups to check
-        if candidate_groups:
-            groups_to_check = candidate_groups
-        else:
-            all_groups = await free.get_groups()
-            groups_to_check = [g.get("name", "") for g in all_groups if g.get("name")]
+    # Determine which groups to check
+    if candidate_groups:
+        groups_to_check = candidate_groups
+    else:
+        groups_to_check = list(GROUP_TTP_PROFILES.keys())
 
-        # Score each group
-        group_scores: list[dict[str, Any]] = []
+    # Score each group
+    group_scores: list[dict[str, Any]] = []
 
-        for group_name in groups_to_check:
-            if not group_name:
-                continue
+    for group_name in groups_to_check:
+        group_techniques = GROUP_TTP_PROFILES.get(group_name, set())
+        if not group_techniques:
+            continue
 
-            group_ttps = await pro.get_group_ttps(group_name)
-            if not group_ttps:
-                continue
+        overlap = mitre_set & group_techniques
+        if not overlap:
+            continue
 
-            # Get the technique IDs this group is known for
-            group_technique_ids = {
-                t.technique_id.upper()
-                for t in group_ttps
-                if t.technique_id
-            }
+        # Score = fraction of observed techniques that match this group
+        score = len(overlap) / max(len(mitre_set), 1)
 
-            # Calculate overlap
-            mitre_set = set(mitre_ids)
-            overlap = mitre_set & group_technique_ids
-            if not overlap:
-                continue
+        matched_details = [
+            {"technique_id": tid} for tid in sorted(overlap)
+        ]
 
-            # Score = fraction of observed techniques that match this group
-            score = len(overlap) / max(len(mitre_set), 1)
-
-            matched_details = []
-            for ttp in group_ttps:
-                if ttp.technique_id.upper() in overlap:
-                    matched_details.append({
-                        "technique_id": ttp.technique_id,
-                        "technique_name": ttp.technique_name,
-                        "tactic": ttp.tactic,
-                    })
-
-            group_scores.append({
-                "group": group_name,
-                "score": round(score, 4),
-                "overlap_count": len(overlap),
-                "total_observed": len(mitre_set),
-                "total_group_ttps": len(group_technique_ids),
-                "matched_ttps": matched_details,
-            })
+        group_scores.append({
+            "group": group_name,
+            "score": round(score, 4),
+            "overlap_count": len(overlap),
+            "total_observed": len(mitre_set),
+            "total_group_ttps": len(group_techniques),
+            "matched_ttps": matched_details,
+        })
 
     # Sort by score descending
     group_scores.sort(key=lambda x: x["score"], reverse=True)

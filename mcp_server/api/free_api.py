@@ -34,7 +34,20 @@ class FreeAPI:
             List of group data dicts.
         """
         result = await self._client.get("/groups")
-        return result if isinstance(result, list) else []
+        if isinstance(result, list):
+            return result
+        if isinstance(result, dict):
+            # API may wrap groups in a key like "data" or "groups"
+            for key in ("data", "groups", "results"):
+                if key in result and isinstance(result[key], list):
+                    return result[key]
+            # API may return a dict keyed by group name
+            # Check if values look like group objects
+            first_val = next(iter(result.values()), None) if result else None
+            if isinstance(first_val, dict):
+                return list(result.values())
+            return [result] if result else []
+        return []
 
     async def get_group(self, name: str) -> GroupProfile | None:
         """Get profile for a specific ransomware group.
