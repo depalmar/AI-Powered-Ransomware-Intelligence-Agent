@@ -86,41 +86,52 @@ async def run_checks() -> list[tuple[str, bool, str]]:
     from mcp_server.api.client import APIClient
     from mcp_server.api.free_api import FreeAPI
 
-    try:
-        async with APIClient(timeout=120.0) as client:
-            free = FreeAPI(client)
+    async with APIClient(timeout=120.0) as client:
+        free = FreeAPI(client)
 
-            # Groups
-            console.print("  [dim]Fetching /groups...[/dim]")
+        # Groups
+        console.print("  [dim]Fetching /groups...[/dim]")
+        try:
             groups = await free.get_groups()
             results.append(("Free API: /groups", len(groups) > 0, f"{len(groups)} groups"))
+        except Exception as exc:
+            results.append(("Free API: /groups", False, str(exc)[:120]))
 
-            # Group profile
-            console.print("  [dim]Fetching /groups/lockbit3...[/dim]")
+        # Group profile
+        console.print("  [dim]Fetching /groups/lockbit3...[/dim]")
+        try:
             profile = await free.get_group("lockbit3")
             results.append((
                 "Free API: /groups/lockbit3",
                 profile is not None,
                 profile.name if profile else "Not found",
             ))
+        except Exception as exc:
+            results.append(("Free API: /groups/lockbit3", False, str(exc)[:120]))
 
-            # Recent victims (can be large, use longer timeout)
-            console.print("  [dim]Fetching /victims/recent (may take a moment)...[/dim]")
+        # Recent victims
+        console.print("  [dim]Fetching /victims/recent...[/dim]")
+        try:
             victims = await free.get_recent_victims()
             results.append(("Free API: /victims/recent", len(victims) > 0, f"{len(victims)} victims"))
+        except Exception as exc:
+            results.append(("Free API: /victims/recent", False, str(exc)[:120]))
 
-            # Victim search
-            console.print("  [dim]Fetching /victims/search...[/dim]")
+        # Victim search
+        console.print("  [dim]Fetching /victims/search...[/dim]")
+        try:
             search = await free.search_victims("bank")
             results.append(("Free API: /victims/search", isinstance(search, list), f"{len(search)} results"))
+        except Exception as exc:
+            results.append(("Free API: /victims/search", False, str(exc)[:120]))
 
-            # YARA rules
-            console.print("  [dim]Fetching /yara/lockbit3...[/dim]")
+        # YARA rules
+        console.print("  [dim]Fetching /yara/lockbit3...[/dim]")
+        try:
             yara = await free.get_group_yara("lockbit3")
             results.append(("Free API: /yara/lockbit3", isinstance(yara, list), f"{len(yara)} rules"))
-
-    except Exception as exc:
-        results.append(("Free API connectivity", False, str(exc)[:120]))
+        except Exception as exc:
+            results.append(("Free API: /yara/lockbit3", False, str(exc)[:120]))
 
     # ---- PRO API checks ----
     if settings.has_pro_api:

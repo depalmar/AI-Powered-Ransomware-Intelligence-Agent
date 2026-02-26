@@ -87,7 +87,7 @@ class FreeAPI:
         Returns:
             List of matching victim records.
         """
-        data = await self._client.get_or_none("/victims/search", params={"query": keyword})
+        data = await self._client.get_or_none(f"/victims/search/{keyword}")
         if not data:
             return []
         return [r for v in data if (r := self._parse_victim(v)) is not None]
