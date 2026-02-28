@@ -42,23 +42,33 @@
     },
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// FILTER VICTIMS BY SECTOR + REDACT NAMES\n// ============================================================\n// Only keep victims in sectors we care about for our org.\n// Customize this list to match your industry or client base.\n//\n// IMPORTANT: Victim names are REDACTED and replaced with\n// fabricated company names for webinar/recording safety.\n// Real victim data from ransomware.live should never be\n// displayed in public presentations.\n// ============================================================\n\nconst targetSectors = [\n  'manufacturing',\n  'healthcare',\n  'finance',\n  'technology',\n  'energy',\n  'government'\n];\n\n// Fabricated company names for redaction (rotate through these)\nconst FAKE_COMPANIES = [\n  'Apex Industrial Solutions', 'Meridian Health Partners',\n  'Cobalt Financial Group', 'Zenith Technologies Inc',\n  'Pinnacle Energy Corp', 'Vanguard Public Services',\n  'Atlas Manufacturing Ltd', 'Horizon Medical Systems',\n  'Sterling Capital Advisors', 'Quantum Dynamics Corp',\n  'Ironbridge Logistics', 'Cascade Healthcare Network',\n  'Summit Engineering Group', 'Pacific Rim Trading Co',\n  'Northwind Aerospace', 'Redwood Pharmaceuticals'\n];\nlet fakeIndex = 0;\n\nfunction redactVictimName() {\n  const name = FAKE_COMPANIES[fakeIndex % FAKE_COMPANIES.length];\n  fakeIndex++;\n  return name;\n}\n\nconst victims = $input.all();\nconst results = [];\n\nfor (const item of victims) {\n  const victim = item.json;\n  \n  // ransomware.live uses 'activity' field for sector info\n  const sector = (victim.activity || victim.sector || '').toLowerCase();\n  \n  const matchesSector = targetSectors.some(s => sector.includes(s));\n  \n  if (matchesSector) {\n    results.push({\n      json: {\n        victim_name: redactVictimName(),\n        group_name: victim.group_name || victim.group || 'Unknown',\n        sector: victim.activity || victim.sector || 'Unknown',\n        discovered: victim.discovered || victim.date || 'Unknown',\n        country: victim.country || 'Unknown',\n        website: '[REDACTED]'\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  return [{ json: { message: 'No victims found in target sectors', count: 0 } }];\n}\n\nreturn results;"
+        "jsCode": "// ============================================================\n// REDACT VICTIM DATA — RUNS FIRST\n// ============================================================\n// This node runs IMMEDIATELY after fetching raw data.\n// It redacts victim names, domains, and URLs before any\n// other node can display them in the n8n UI.\n//\n// IMPORTANT: This ensures no real victim names appear\n// anywhere in the workflow execution history, logs, or\n// screenshots during the SANS webinar.\n// ============================================================\n\nconst FAKE_COMPANIES = [\n  'Apex Industrial Solutions', 'Meridian Health Partners',\n  'Cobalt Financial Group', 'Zenith Technologies Inc',\n  'Pinnacle Energy Corp', 'Vanguard Public Services',\n  'Atlas Manufacturing Ltd', 'Horizon Medical Systems',\n  'Sterling Capital Advisors', 'Quantum Dynamics Corp',\n  'Ironbridge Logistics', 'Cascade Healthcare Network',\n  'Summit Engineering Group', 'Pacific Rim Trading Co',\n  'Northwind Aerospace', 'Redwood Pharmaceuticals',\n  'Clearwater Data Systems', 'Titan Defense Industries',\n  'Evergreen Supply Chain', 'Beacon Analytics Group'\n];\n\nlet fakeIndex = 0;\n\nfunction nextFakeName() {\n  const name = FAKE_COMPANIES[fakeIndex % FAKE_COMPANIES.length];\n  fakeIndex++;\n  return name;\n}\n\nconst items = $input.all();\nconst redacted = [];\n\nfor (const item of items) {\n  const v = item.json;\n  redacted.push({\n    json: {\n      victim_redacted: nextFakeName(),\n      group: v.group || 'Unknown',\n      activity: v.activity || '',\n      country: v.country || 'Unknown',\n      discovered: v.discovered || '',\n      attackdate: v.attackdate || '',\n      description: v.description || '',\n      infostealer: v.infostealer || false,\n      press: v.press || false,\n      domain: '[REDACTED]',\n      url: '[REDACTED]',\n      claim_url: '[REDACTED]',\n      screenshot: '[REDACTED]'\n    }\n  });\n}\n\nreturn redacted;"
       },
-      "id": "filter-by-sector",
-      "name": "Filter by Sector",
+      "id": "redact-victims",
+      "name": "Redact Victim Data",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [720, 400]
     },
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// EXTRACT UNIQUE THREAT GROUPS\n// ============================================================\n// Deduplicate the ransomware groups targeting our sectors\n// so we fetch each group profile only once.\n// ============================================================\n\nconst items = $input.all();\n\n// Handle 'no victims' case\nif (items.length === 1 && items[0].json.count === 0) {\n  return [{ json: { no_results: true, message: items[0].json.message } }];\n}\n\nconst groupSet = new Set();\nconst victimsByGroup = {};\n\nfor (const item of items) {\n  const group = item.json.group_name;\n  if (group && group !== 'Unknown') {\n    groupSet.add(group);\n    if (!victimsByGroup[group]) {\n      victimsByGroup[group] = [];\n    }\n    victimsByGroup[group].push(item.json);\n  }\n}\n\nconst groups = Array.from(groupSet).map(g => ({\n  json: {\n    group_name: g,\n    victim_count: victimsByGroup[g].length,\n    victims: victimsByGroup[g]\n  }\n}));\n\nreturn groups.length > 0 ? groups : [{ json: { no_results: true, message: 'No groups identified' } }];"
+        "jsCode": "// ============================================================\n// FILTER BY INDUSTRY (activity field)\n// ============================================================\n// The ransomware.live API uses the 'activity' field for\n// sector/industry classification. This node filters to\n// only the industries relevant to our audience.\n//\n// Customize the targetIndustries array to match your\n// organization or the demo you want to show.\n// ============================================================\n\nconst targetIndustries = [\n  'manufacturing',\n  'healthcare',\n  'health',\n  'hospital',\n  'medical',\n  'finance',\n  'financial',\n  'banking',\n  'insurance',\n  'technology',\n  'software',\n  'IT services',\n  'energy',\n  'oil',\n  'utilities',\n  'government',\n  'education',\n  'construction',\n  'legal',\n  'retail',\n  'transportation',\n  'logistics'\n];\n\nconst items = $input.all();\nconst filtered = [];\n\nfor (const item of items) {\n  const activity = (item.json.activity || '').toLowerCase();\n\n  if (!activity) continue;\n\n  const matches = targetIndustries.some(ind =>\n    activity.includes(ind.toLowerCase())\n  );\n\n  if (matches) {\n    filtered.push(item);\n  }\n}\n\nif (filtered.length === 0) {\n  return [{ json: { message: 'No victims found in target industries', count: 0 } }];\n}\n\nreturn filtered;"
+      },
+      "id": "filter-by-industry",
+      "name": "Filter by Industry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// EXTRACT UNIQUE THREAT GROUPS\n// ============================================================\n// Deduplicate ransomware groups and collect their victim\n// lists so we fetch each group profile only once.\n// ============================================================\n\nconst items = $input.all();\n\nif (items.length === 1 && items[0].json.count === 0) {\n  return [{ json: { no_results: true, message: items[0].json.message } }];\n}\n\nconst groupMap = {};\n\nfor (const item of items) {\n  const group = item.json.group;\n  if (group && group !== 'Unknown') {\n    if (!groupMap[group]) {\n      groupMap[group] = [];\n    }\n    groupMap[group].push({\n      victim_redacted: item.json.victim_redacted,\n      activity: item.json.activity,\n      country: item.json.country,\n      discovered: item.json.discovered,\n      attackdate: item.json.attackdate\n    });\n  }\n}\n\nconst groups = Object.entries(groupMap).map(([name, victims]) => ({\n  json: {\n    group: name,\n    victim_count: victims.length,\n    victims: victims\n  }\n}));\n\nreturn groups.length > 0\n  ? groups\n  : [{ json: { no_results: true, message: 'No groups identified' } }];"
       },
       "id": "extract-groups",
       "name": "Extract Unique Groups",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 400]
+      "position": [1200, 400]
     },
     {
       "parameters": {
@@ -86,12 +96,12 @@
       "name": "Groups Found?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1200, 400]
+      "position": [1440, 400]
     },
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://api.ransomware.live/v2/groups/{{ $json.group_name }}",
+        "url": "=https://api.ransomware.live/v2/groups/{{ $json.group }}",
         "options": {
           "timeout": 15000
         }
@@ -100,46 +110,62 @@
       "name": "Get Group Profile",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1440, 340]
+      "position": [1680, 340]
     },
     {
       "parameters": {
-        "jsCode": "// ============================================================\n// FORMAT THREAT SUMMARY\n// ============================================================\n// Build a Markdown-formatted threat brief suitable for\n// Slack, email, or a wiki page.\n// ============================================================\n\nconst items = $input.all();\nconst now = new Date().toISOString().split('T')[0];\n\nlet markdown = `# 🔒 Ransomware Threat Monitor\\n`;\nmarkdown += `**Generated:** ${now}\\n\\n`;\nmarkdown += `---\\n\\n`;\n\nfor (const item of items) {\n  const profile = item.json;\n  const groupName = (profile.name || profile.group_name || 'Unknown').toUpperCase();\n  \n  markdown += `## ${groupName}\\n\\n`;\n  \n  if (profile.description) {\n    markdown += `${profile.description.substring(0, 300)}...\\n\\n`;\n  }\n  \n  if (profile.locations) {\n    markdown += `**Suspected Location:** ${profile.locations}\\n`;\n  }\n  \n  if (profile.profile) {\n    const p = Array.isArray(profile.profile) ? profile.profile : [profile.profile];\n    for (const entry of p) {\n      if (entry && typeof entry === 'string') {\n        markdown += `${entry.substring(0, 200)}\\n`;\n      }\n    }\n    markdown += `\\n`;\n  }\n  \n  markdown += `---\\n\\n`;\n}\n\nmarkdown += `\\n_Monitor powered by ransomware.live API + n8n_\\n`;\nmarkdown += `_SANS Webinar Demo — AI-Powered Ransomware Intelligence_`;\n\nreturn [{\n  json: {\n    summary: markdown,\n    group_count: items.length,\n    generated_at: now\n  }\n}];"
+        "jsCode": "// ============================================================\n// BUILD CONSOLIDATED THREAT BRIEF\n// ============================================================\n// Aggregates ALL group profiles + victim data into ONE\n// single document. Outputs three formats:\n//   - markdown:   for Slack / raw display\n//   - plain_text: for Google Docs\n//   - slack_text: condensed Slack message\n//\n// This replaces the old per-group output that was creating\n// 20 separate documents.\n// ============================================================\n\nconst items = $input.all();\nconst now = new Date().toISOString().split('T')[0];\n\n// ---- Collect all group data with their victims ----\nconst groupBriefs = [];\nlet totalVictims = 0;\n\nfor (const item of items) {\n  const profile = item.json;\n  const groupName = (profile.name || profile.group || 'Unknown').toUpperCase();\n\n  // Recover victim list from the earlier node via the input chain\n  // The HTTP Request node returns group profile data but we also\n  // need the victim context we attached earlier. n8n preserves\n  // paired data when items flow 1:1, so $('Extract Unique Groups')\n  // gives us the matching item.\n  let victims = [];\n  try {\n    const pairedData = $('Extract Unique Groups').item;\n    if (pairedData && pairedData.json && pairedData.json.victims) {\n      victims = pairedData.json.victims;\n      totalVictims += victims.length;\n    }\n  } catch (e) {\n    // Fallback: no paired data available\n  }\n\n  groupBriefs.push({\n    name: groupName,\n    description: profile.description || '',\n    locations: profile.locations || 'Unknown',\n    profile_notes: profile.profile || [],\n    victims: victims\n  });\n}\n\n// ---- Build Markdown ----\nlet md = `# Ransomware Threat Brief\\n`;\nmd += `**Date:** ${now} | **Groups:** ${groupBriefs.length} | **Victims (filtered):** ${totalVictims}\\n\\n`;\nmd += `---\\n\\n`;\n\n// Executive summary table\nmd += `## Threat Overview\\n\\n`;\nmd += `| Group | Victims | Industries Hit | Countries |\\n`;\nmd += `|-------|---------|---------------|-----------|\\n`;\n\nfor (const g of groupBriefs) {\n  const industries = [...new Set(g.victims.map(v => v.activity).filter(Boolean))].join(', ') || 'N/A';\n  const countries = [...new Set(g.victims.map(v => v.country).filter(Boolean))].join(', ') || 'N/A';\n  md += `| ${g.name} | ${g.victims.length} | ${industries} | ${countries} |\\n`;\n}\n\nmd += `\\n---\\n\\n`;\n\n// Per-group deep dive\nfor (const g of groupBriefs) {\n  md += `## ${g.name}\\n\\n`;\n\n  if (g.description) {\n    md += `${g.description.substring(0, 400)}\\n\\n`;\n  }\n\n  md += `**Suspected Location:** ${g.locations}\\n\\n`;\n\n  if (g.profile_notes && g.profile_notes.length > 0) {\n    const notes = Array.isArray(g.profile_notes) ? g.profile_notes : [g.profile_notes];\n    for (const note of notes) {\n      if (note && typeof note === 'string') {\n        md += `> ${note.substring(0, 250)}\\n`;\n      }\n    }\n    md += `\\n`;\n  }\n\n  if (g.victims.length > 0) {\n    md += `**Recent Targets (redacted):**\\n\\n`;\n    md += `| Company (Redacted) | Industry | Country | Discovered |\\n`;\n    md += `|--------------------|----------|---------|------------|\\n`;\n    for (const v of g.victims) {\n      md += `| ${v.victim_redacted} | ${v.activity || 'N/A'} | ${v.country || 'N/A'} | ${v.discovered || 'N/A'} |\\n`;\n    }\n    md += `\\n`;\n  }\n\n  md += `---\\n\\n`;\n}\n\nmd += `\\n_Monitor powered by ransomware.live API + n8n_\\n`;\nmd += `_SANS Webinar Demo — AI-Powered Ransomware Intelligence_\\n`;\nmd += `_All victim names have been redacted for this presentation._\\n`;\n\n// ---- Build Slack summary (condensed) ----\nlet slack = `*Ransomware Threat Brief — ${now}*\\n`;\nslack += `${groupBriefs.length} active groups | ${totalVictims} victims in monitored industries\\n\\n`;\n\nfor (const g of groupBriefs) {\n  const industries = [...new Set(g.victims.map(v => v.activity).filter(Boolean))].slice(0, 3).join(', ');\n  slack += `*${g.name}* — ${g.victims.length} victim(s) | ${industries}\\n`;\n}\n\nslack += `\\n_All victim names redacted. Full brief in Google Doc._`;\n\n// ---- Build plain text for Google Docs ----\nlet plain = md.replace(/\\*\\*/g, '').replace(/^#+\\s/gm, '').replace(/\\|/g, ' | ');\n\nreturn [{\n  json: {\n    markdown: md,\n    slack_text: slack,\n    google_doc_content: plain,\n    group_count: groupBriefs.length,\n    victim_count: totalVictims,\n    generated_at: now\n  }\n}];"
       },
-      "id": "format-summary",
-      "name": "Format Threat Summary",
+      "id": "build-brief",
+      "name": "Build Consolidated Brief",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 340]
+      "position": [1920, 340]
     },
     {
       "parameters": {
         "authentication": "oAuth2",
         "channel": "#threat-intel",
-        "text": "={{ $json.summary }}",
+        "text": "={{ $json.slack_text }}",
         "otherOptions": {}
       },
       "id": "slack-notify",
       "name": "Slack Alert",
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.2,
-      "position": [1920, 340],
+      "position": [2220, 240],
       "disabled": true
     },
     {
       "parameters": {
-        "jsCode": "// No groups found in monitored sectors — log it\nreturn [{\n  json: {\n    status: 'clear',\n    message: 'No ransomware activity detected in monitored sectors this cycle.',\n    timestamp: new Date().toISOString()\n  }\n}];"
+        "operation": "create",
+        "title": "=Ransomware Threat Brief — {{ $json.generated_at }}",
+        "content": "={{ $json.google_doc_content }}",
+        "folderId": "",
+        "options": {}
+      },
+      "id": "google-doc",
+      "name": "Google Doc Report",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [2220, 440],
+      "credentials": {},
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// No groups found in monitored industries — log it\nreturn [{\n  json: {\n    status: 'clear',\n    message: 'No ransomware activity detected in monitored industries this cycle.',\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "id": "no-activity",
       "name": "No Activity Detected",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1440, 540]
+      "position": [1680, 540]
     },
     {
       "parameters": {
-        "content": "## 🎓 101 — Ransomware Group Threat Monitor\n\n**SANS Webinar: AI-Powered Ransomware Intelligence**\n\nThis beginner workflow demonstrates:\n1. **Scheduled polling** of the ransomware.live API\n2. **Sector-based filtering** of recent victims\n3. **Group profile enrichment** for each active threat actor\n4. **Formatted notifications** via Slack\n\n**How to use:**\n- Click \"Manual Trigger\" to test immediately\n- Or let the schedule run every 6 hours\n- Edit the sector filter to match your industry\n- Connect your Slack workspace to receive alerts\n\n**API:** ransomware.live v2 (free, no key required)\n\n⚠️ **RECORDING SAFE:** Victim names are automatically redacted and replaced with fabricated company names. Real victim data is never displayed.",
-        "height": 390,
+        "content": "## 101 — Ransomware Group Threat Monitor\n\n**SANS Webinar: AI-Powered Ransomware Intelligence**\n\nThis workflow demonstrates:\n1. **Scheduled polling** of the ransomware.live API\n2. **Immediate victim redaction** — names replaced before any processing\n3. **Industry filtering** using the `activity` field\n4. **Group profile enrichment** for each active threat actor\n5. **ONE consolidated brief** sent to Slack + Google Docs\n\n**How to use:**\n- Click \"Manual Trigger\" to test immediately\n- Or let the schedule run every 6 hours\n- Edit the industry filter to match your audience\n- Connect Slack / Google Docs credentials\n\n**API:** ransomware.live v2 (free, no key required)\n\n**RECORDING SAFE:** Victim names are redacted immediately after fetch. No real names appear anywhere in the execution log.",
+        "height": 430,
         "width": 340,
         "color": 4
       },
@@ -147,46 +173,59 @@
       "name": "Sticky Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-60, 220]
+      "position": [-60, 200]
     },
     {
       "parameters": {
-        "content": "### 📡 Data Ingestion\n\nThe HTTP Request node calls the ransomware.live API to get the latest victim postings from ransomware leak sites.\n\n**Endpoint:** `GET /v2/recentvictims`\n\nThis returns victims posted in the last 24-48 hours with group name, sector, country, and discovery date.",
-        "height": 230,
-        "width": 300,
+        "content": "### Data Ingestion\n\nFetches latest victim postings from ransomware leak sites.\n\n**Endpoint:** `GET /v2/recentvictims`\n\nReturns victims posted in the last 24-48 hours with fields:\n`group`, `activity`, `country`, `discovered`, `victim`",
+        "height": 200,
+        "width": 260,
         "color": 6
       },
       "id": "sticky-fetch",
       "name": "Sticky Note1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [400, 560]
+      "position": [420, 560]
     },
     {
       "parameters": {
-        "content": "### 🔍 Analysis & Enrichment\n\nFor each unique ransomware group found in our sector filter, we fetch a detailed profile including:\n- Group description & history\n- Suspected operating locations\n- Known tactics and capabilities\n\nThis turns raw victim data into actionable intelligence.",
-        "height": 230,
-        "width": 300,
+        "content": "### Redaction (FIRST step)\n\nVictim names are replaced with fake company names BEFORE any filtering, logging, or display.\n\nDomains, URLs, and screenshots are also stripped.\n\nThis ensures the n8n execution log never contains real victim identifiers.",
+        "height": 200,
+        "width": 260,
+        "color": 1
+      },
+      "id": "sticky-redact",
+      "name": "Sticky Redaction",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [660, 560]
+    },
+    {
+      "parameters": {
+        "content": "### Industry Filter\n\nFilters using the `activity` field from the ransomware.live API — this is the correct field for industry/sector.\n\nBroad keyword matching covers variations like 'healthcare', 'health', 'hospital', 'medical', etc.",
+        "height": 200,
+        "width": 260,
+        "color": 6
+      },
+      "id": "sticky-filter",
+      "name": "Sticky Filter",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [900, 560]
+    },
+    {
+      "parameters": {
+        "content": "### Consolidated Output\n\nALL group profiles and victims are aggregated into ONE document.\n\nOutputs three formats:\n- **markdown** — tables + deep dives\n- **slack_text** — condensed summary\n- **google_doc_content** — plain text\n\nNo more 20 separate docs!",
+        "height": 210,
+        "width": 280,
         "color": 3
       },
-      "id": "sticky-enrich",
-      "name": "Sticky Note2",
+      "id": "sticky-output",
+      "name": "Sticky Output",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [1140, 560]
-    },
-    {
-      "parameters": {
-        "content": "### 📨 Notification\n\nThe formatted Markdown summary is sent to Slack (or email). Enable the Slack node and connect your workspace.\n\n**Tip:** You can replace Slack with:\n- Microsoft Teams\n- Email (SMTP)\n- Webhook to your SIEM\n- Google Chat\n- Discord",
-        "height": 220,
-        "width": 280,
-        "color": 2
-      },
-      "id": "sticky-notify",
-      "name": "Sticky Note3",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [1820, 520]
+      "position": [1860, 520]
     }
   ],
   "connections": {
@@ -216,14 +255,25 @@
       "main": [
         [
           {
-            "node": "Filter by Sector",
+            "node": "Redact Victim Data",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Filter by Sector": {
+    "Redact Victim Data": {
+      "main": [
+        [
+          {
+            "node": "Filter by Industry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Industry": {
       "main": [
         [
           {
@@ -267,18 +317,23 @@
       "main": [
         [
           {
-            "node": "Format Threat Summary",
+            "node": "Build Consolidated Brief",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Format Threat Summary": {
+    "Build Consolidated Brief": {
       "main": [
         [
           {
             "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Doc Report",
             "type": "main",
             "index": 0
           }
@@ -307,7 +362,7 @@
   ],
   "triggerCount": 1,
   "updatedAt": "2026-02-28T00:00:00.000Z",
-  "versionId": "101-v1",
+  "versionId": "101-v2",
   "meta": {
     "instanceId": "sans-webinar-demo",
     "templateCredsSetupCompleted": true
