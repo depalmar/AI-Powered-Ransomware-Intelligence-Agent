@@ -1,0 +1,315 @@
+{
+  "name": "101 — Ransomware Group Threat Monitor",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        }
+      },
+      "id": "schedule-trigger",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {},
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [220, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.ransomware.live/v2/recentvictims",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "fetch-recent-victims",
+      "name": "Fetch Recent Victims",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FILTER VICTIMS BY SECTOR + REDACT NAMES\n// ============================================================\n// Only keep victims in sectors we care about for our org.\n// Customize this list to match your industry or client base.\n//\n// IMPORTANT: Victim names are REDACTED and replaced with\n// fabricated company names for webinar/recording safety.\n// Real victim data from ransomware.live should never be\n// displayed in public presentations.\n// ============================================================\n\nconst targetSectors = [\n  'manufacturing',\n  'healthcare',\n  'finance',\n  'technology',\n  'energy',\n  'government'\n];\n\n// Fabricated company names for redaction (rotate through these)\nconst FAKE_COMPANIES = [\n  'Apex Industrial Solutions', 'Meridian Health Partners',\n  'Cobalt Financial Group', 'Zenith Technologies Inc',\n  'Pinnacle Energy Corp', 'Vanguard Public Services',\n  'Atlas Manufacturing Ltd', 'Horizon Medical Systems',\n  'Sterling Capital Advisors', 'Quantum Dynamics Corp',\n  'Ironbridge Logistics', 'Cascade Healthcare Network',\n  'Summit Engineering Group', 'Pacific Rim Trading Co',\n  'Northwind Aerospace', 'Redwood Pharmaceuticals'\n];\nlet fakeIndex = 0;\n\nfunction redactVictimName() {\n  const name = FAKE_COMPANIES[fakeIndex % FAKE_COMPANIES.length];\n  fakeIndex++;\n  return name;\n}\n\nconst victims = $input.all();\nconst results = [];\n\nfor (const item of victims) {\n  const victim = item.json;\n  \n  // ransomware.live uses 'activity' field for sector info\n  const sector = (victim.activity || victim.sector || '').toLowerCase();\n  \n  const matchesSector = targetSectors.some(s => sector.includes(s));\n  \n  if (matchesSector) {\n    results.push({\n      json: {\n        victim_name: redactVictimName(),\n        group_name: victim.group_name || victim.group || 'Unknown',\n        sector: victim.activity || victim.sector || 'Unknown',\n        discovered: victim.discovered || victim.date || 'Unknown',\n        country: victim.country || 'Unknown',\n        website: '[REDACTED]'\n      }\n    });\n  }\n}\n\nif (results.length === 0) {\n  return [{ json: { message: 'No victims found in target sectors', count: 0 } }];\n}\n\nreturn results;"
+      },
+      "id": "filter-by-sector",
+      "name": "Filter by Sector",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// EXTRACT UNIQUE THREAT GROUPS\n// ============================================================\n// Deduplicate the ransomware groups targeting our sectors\n// so we fetch each group profile only once.\n// ============================================================\n\nconst items = $input.all();\n\n// Handle 'no victims' case\nif (items.length === 1 && items[0].json.count === 0) {\n  return [{ json: { no_results: true, message: items[0].json.message } }];\n}\n\nconst groupSet = new Set();\nconst victimsByGroup = {};\n\nfor (const item of items) {\n  const group = item.json.group_name;\n  if (group && group !== 'Unknown') {\n    groupSet.add(group);\n    if (!victimsByGroup[group]) {\n      victimsByGroup[group] = [];\n    }\n    victimsByGroup[group].push(item.json);\n  }\n}\n\nconst groups = Array.from(groupSet).map(g => ({\n  json: {\n    group_name: g,\n    victim_count: victimsByGroup[g].length,\n    victims: victimsByGroup[g]\n  }\n}));\n\nreturn groups.length > 0 ? groups : [{ json: { no_results: true, message: 'No groups identified' } }];"
+      },
+      "id": "extract-groups",
+      "name": "Extract Unique Groups",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "check-results",
+              "leftValue": "={{ $json.no_results }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "notEqual"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-groups-found",
+      "name": "Groups Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.ransomware.live/v2/groups/{{ $json.group_name }}",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "id": "get-group-profile",
+      "name": "Get Group Profile",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 340]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// FORMAT THREAT SUMMARY\n// ============================================================\n// Build a Markdown-formatted threat brief suitable for\n// Slack, email, or a wiki page.\n// ============================================================\n\nconst items = $input.all();\nconst now = new Date().toISOString().split('T')[0];\n\nlet markdown = `# 🔒 Ransomware Threat Monitor\\n`;\nmarkdown += `**Generated:** ${now}\\n\\n`;\nmarkdown += `---\\n\\n`;\n\nfor (const item of items) {\n  const profile = item.json;\n  const groupName = (profile.name || profile.group_name || 'Unknown').toUpperCase();\n  \n  markdown += `## ${groupName}\\n\\n`;\n  \n  if (profile.description) {\n    markdown += `${profile.description.substring(0, 300)}...\\n\\n`;\n  }\n  \n  if (profile.locations) {\n    markdown += `**Suspected Location:** ${profile.locations}\\n`;\n  }\n  \n  if (profile.profile) {\n    const p = Array.isArray(profile.profile) ? profile.profile : [profile.profile];\n    for (const entry of p) {\n      if (entry && typeof entry === 'string') {\n        markdown += `${entry.substring(0, 200)}\\n`;\n      }\n    }\n    markdown += `\\n`;\n  }\n  \n  markdown += `---\\n\\n`;\n}\n\nmarkdown += `\\n_Monitor powered by ransomware.live API + n8n_\\n`;\nmarkdown += `_SANS Webinar Demo — AI-Powered Ransomware Intelligence_`;\n\nreturn [{\n  json: {\n    summary: markdown,\n    group_count: items.length,\n    generated_at: now\n  }\n}];"
+      },
+      "id": "format-summary",
+      "name": "Format Threat Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 340]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "#threat-intel",
+        "text": "={{ $json.summary }}",
+        "otherOptions": {}
+      },
+      "id": "slack-notify",
+      "name": "Slack Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1920, 340],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// No groups found in monitored sectors — log it\nreturn [{\n  json: {\n    status: 'clear',\n    message: 'No ransomware activity detected in monitored sectors this cycle.',\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "no-activity",
+      "name": "No Activity Detected",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1440, 540]
+    },
+    {
+      "parameters": {
+        "content": "## 🎓 101 — Ransomware Group Threat Monitor\n\n**SANS Webinar: AI-Powered Ransomware Intelligence**\n\nThis beginner workflow demonstrates:\n1. **Scheduled polling** of the ransomware.live API\n2. **Sector-based filtering** of recent victims\n3. **Group profile enrichment** for each active threat actor\n4. **Formatted notifications** via Slack\n\n**How to use:**\n- Click \"Manual Trigger\" to test immediately\n- Or let the schedule run every 6 hours\n- Edit the sector filter to match your industry\n- Connect your Slack workspace to receive alerts\n\n**API:** ransomware.live v2 (free, no key required)\n\n⚠️ **RECORDING SAFE:** Victim names are automatically redacted and replaced with fabricated company names. Real victim data is never displayed.",
+        "height": 390,
+        "width": 340,
+        "color": 4
+      },
+      "id": "sticky-intro",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-60, 220]
+    },
+    {
+      "parameters": {
+        "content": "### 📡 Data Ingestion\n\nThe HTTP Request node calls the ransomware.live API to get the latest victim postings from ransomware leak sites.\n\n**Endpoint:** `GET /v2/recentvictims`\n\nThis returns victims posted in the last 24-48 hours with group name, sector, country, and discovery date.",
+        "height": 230,
+        "width": 300,
+        "color": 6
+      },
+      "id": "sticky-fetch",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [400, 560]
+    },
+    {
+      "parameters": {
+        "content": "### 🔍 Analysis & Enrichment\n\nFor each unique ransomware group found in our sector filter, we fetch a detailed profile including:\n- Group description & history\n- Suspected operating locations\n- Known tactics and capabilities\n\nThis turns raw victim data into actionable intelligence.",
+        "height": 230,
+        "width": 300,
+        "color": 3
+      },
+      "id": "sticky-enrich",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1140, 560]
+    },
+    {
+      "parameters": {
+        "content": "### 📨 Notification\n\nThe formatted Markdown summary is sent to Slack (or email). Enable the Slack node and connect your workspace.\n\n**Tip:** You can replace Slack with:\n- Microsoft Teams\n- Email (SMTP)\n- Webhook to your SIEM\n- Google Chat\n- Discord",
+        "height": 220,
+        "width": 280,
+        "color": 2
+      },
+      "id": "sticky-notify",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1820, 520]
+    }
+  ],
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Victims",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Victims",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Victims": {
+      "main": [
+        [
+          {
+            "node": "Filter by Sector",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by Sector": {
+      "main": [
+        [
+          {
+            "node": "Extract Unique Groups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Unique Groups": {
+      "main": [
+        [
+          {
+            "node": "Groups Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groups Found?": {
+      "main": [
+        [
+          {
+            "node": "Get Group Profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Activity Detected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Group Profile": {
+      "main": [
+        [
+          {
+            "node": "Format Threat Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Threat Summary": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "SANS-Webinar",
+      "id": "sans-webinar"
+    },
+    {
+      "name": "101-Beginner",
+      "id": "101-beginner"
+    },
+    {
+      "name": "Ransomware-Intel",
+      "id": "ransomware-intel"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2026-02-28T00:00:00.000Z",
+  "versionId": "101-v1",
+  "meta": {
+    "instanceId": "sans-webinar-demo",
+    "templateCredsSetupCompleted": true
+  }
+}
