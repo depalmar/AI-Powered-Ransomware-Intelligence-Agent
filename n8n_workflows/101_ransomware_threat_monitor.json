@@ -80,12 +80,12 @@
           },
           "conditions": [
             {
-              "id": "check-results",
-              "leftValue": "={{ $json.no_results }}",
-              "rightValue": true,
+              "id": "check-victim-count",
+              "leftValue": "={{ $json.victim_count }}",
+              "rightValue": 1,
               "operator": {
-                "type": "boolean",
-                "operation": "notEqual"
+                "type": "number",
+                "operation": "gte"
               }
             }
           ],
