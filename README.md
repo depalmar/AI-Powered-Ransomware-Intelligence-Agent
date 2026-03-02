@@ -63,12 +63,6 @@ This workflow teaches:
 | `GET /v2/recentvictims` | Free (no key) | Recent ransomware victim postings |
 | `GET /v2/groups/{name}` | Free (no key) | Group profile with victim count |
 
-## Full Platform
-
-For the complete ransomware intelligence platform — including MCP server, LangGraph agent, SIEM/SOAR integrations, and advanced n8n workflows (201 IOC enrichment, 300 full IR pipeline) — see:
-
-**[AI-Powered-Ransomware-Intelligence-Platform](https://github.com/depalmar/AI-Powered-Ransomware-Intelligence-Platform)**
-
 ## License
 
 MIT
