@@ -1,72 +1,67 @@
-# Ransomware Group Threat Monitor (n8n Workflow)
+# 🛡️ AI-Powered Ransomware Intelligence Agent (n8n Workflow)
 
-A beginner-friendly n8n workflow that automatically monitors ransomware group activity targeting your sectors of interest. Uses the free [ransomware.live](https://www.ransomware.live/) API — no API key required.
+[![n8n.io](https://img.shields.io/badge/n8n-Automation-F04747?logo=n8n&logoColor=white)](https://n8n.io/)
+[![Anthropic Claude](https://img.shields.io/badge/AI-Claude_Opus-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+[![Ransomware.live](https://img.shields.io/badge/Data-Ransomware.live-000000?logo=json&logoColor=white)](https://ransomware.live/)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-Built for the SANS podcast demo *"Stay Ahead of Ransomware"* with Ryan Chapman.
+**Author:** Raymond De Palma
 
-## What It Does
+This repository contains the companion n8n workflow for the **SANS Webinar: AI-Powered Ransomware Intelligence**. 
 
-Every 6 hours (or on-demand via manual trigger), the workflow:
+The `101_ransomware_threat_monitor.json` workflow is an automated threat intelligence pipeline that continuously monitors ransomware leak sites, enriches threat actor profiles, utilizes Anthropic's Claude to extract Tactics, Techniques, and Procedures (TTPs), and delivers a consolidated intelligence brief directly to Slack and Google Docs.
 
-1. Fetches recent ransomware victim postings from ransomware.live
-2. Filters victims by your sectors of interest (manufacturing, healthcare, finance, etc.)
-3. Fetches group profiles for context (victim count, description)
-4. Formats a Markdown threat summary
-5. (Optional) Sends the summary to Slack or email
+## ✨ Key Features
 
-## Quick Start
+* **Automated Data Ingestion:** Polls the free `ransomware.live` API (v2) every 6 hours for newly posted victims.
+* **Demo-Safe Redaction:** Automatically strips out real victim identities and replaces them with randomized, realistic fake company data. This ensures the workflow is 100% safe to run during live demos, recordings, and webinars.
+* **Targeted Industry Filtering:** Isolates threats strictly relevant to your organizational sector (e.g., healthcare, finance, manufacturing) using the API's `activity` field.
+* **AI-Powered Analysis:** Leverages a LangChain AI Agent running Anthropic's Claude model to evaluate the data and automatically generate:
+    * Overall Threat Level Assessments
+    * Observed TTPs 
+    * Targeting Patterns (Geographic & Industry)
+    * Defensive Recommendations
+* **Consolidated Reporting:** Aggregates all active threat groups and victim data into **one** comprehensive report, eliminating alert fatigue.
 
-### Prerequisites
+## 🛠️ Prerequisites
 
-- [n8n](https://n8n.io/) instance (self-hosted or cloud)
-- Network access to `https://api.ransomware.live`
-- (Optional) Slack workspace + n8n credentials for notifications
+To run this workflow in your own environment, you will need:
 
-### Setup
+1.  **[n8n Instance](https://n8n.io/):** Either self-hosted or n8n Cloud.
+2.  **Anthropic API Key:** For the Claude Opus AI model.
+3.  **Slack Workspace:** A configured Slack App or Webhook URL to receive alerts.
+4.  **Google Cloud Project:** OAuth2 credentials enabled for the Google Docs API.
+5.  *Note: The `ransomware.live` API is completely free and requires no authentication key.*
 
-1. **Import** — In n8n, go to **Workflows > Import from File** and select `n8n_workflows/101_ransomware_threat_monitor.json`
-2. **Configure sectors** — Edit the `targetSectors` array in the **"Filter by Industry"** node:
-   ```javascript
-   const targetSectors = [
-     'manufacturing', 'healthcare', 'finance',
-     'technology', 'energy', 'government'
-   ];
-   ```
-3. **Test** — Click **Manual Trigger** to run immediately
-4. (Optional) **Enable Slack** — Configure Slack credentials in n8n and enable the Slack node
+## 🚀 Installation & Setup
 
-## Workflow Nodes
+1.  Clone this repository or download the `101_ransomware_threat_monitor.json` file.
+2.  Open your n8n instance and navigate to the **Workflows** dashboard.
+3.  Click **Add Workflow**, then open the workflow menu (top right) and select **Import from File**.
+4.  Upload the `.json` file.
+5.  **Configure Credentials:**
+    * Double-click the `Claude Model` node and add your Anthropic API credentials.
+    * Double-click the `Slack Alert1` node and connect your Slack OAuth/Webhook credentials.
+    * Double-click the `Google Doc Report` node and connect your Google Docs OAuth credentials. Replace the `[REDACTED_FOLDER_ID]` with your target Google Drive folder ID.
+6.  **Customize the Filter (Optional):** Open the `Filter by Industry` node and modify the `targetIndustries` array to match the sectors you want to monitor.
+7.  Click **Save** and toggle the workflow to **Active**.
 
-```
-Schedule Trigger (every 6h)
-  → Fetch Recent Victims (ransomware.live API)
-    → Filter by Industry (JavaScript)
-      → Groups Found? (IF: victim_count >= 1)
-        → True: Get Group Profile → Format Threat Summary → Notify
-        → False: No Activity Detected
-```
+## 📊 Workflow Architecture
 
-## Learning Concepts
+The pipeline follows this logical flow:
+1.  **Trigger:** Executes every 6 hours.
+2.  **Fetch:** Calls `GET /v2/recentvictims`.
+3.  **Redact:** Overwrites victim data with unique fake names.
+4.  **Filter:** Drops victims outside the defined industry scope.
+5.  **Deduplicate:** Groups victims by threat actor.
+6.  **Enrich:** Fetches detailed group intelligence profiles for each active actor.
+7.  **Analyze (AI):** Passes the dataset to Claude to extract structured TTPs and intelligence.
+8.  **Distribute:** Formats the final Markdown and sends it to Slack and Google Docs.
 
-This workflow teaches:
+## 📝 License
 
-- Schedule triggers for automated polling
-- HTTP Request nodes for REST API calls
-- Code nodes for JavaScript data transformation
-- IF conditions for flow control
-- Notification patterns (Slack / email)
+This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**. 
 
-## API Endpoint
+You are free to use, share, and adapt this material for educational and defensive purposes, provided you give appropriate credit and **do not use the material for commercial purposes**. See the [LICENSE](LICENSE) file for details.
 
-| Endpoint | Auth | Description |
-|----------|------|-------------|
-| `GET /v2/recentvictims` | Free (no key) | Recent ransomware victim postings |
-| `GET /v2/groups/{name}` | Free (no key) | Group profile with victim count |
-
-## License
-
-MIT
-
-## Disclaimer
-
-This tool is for **defensive security operations and educational purposes only**. All demo data is fabricated. Victim names are automatically redacted in workflow output.
+*Disclaimer: This workflow handles simulated threat intelligence data but connects to real-world threat feeds. Always handle intelligence reports with appropriate operational security (OPSEC).*
