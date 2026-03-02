@@ -42,6 +42,7 @@ See [mock_api/README.md](mock_api/README.md) for instructions.
 ## 🚀 Installation & Setup
 
 1.  Clone this repository or download the `101_ransomware_threat_monitor.json` file.
+    *   **FOR WEBINAR DEMOS:** Use `n8n_workflows/101_ransomware_threat_monitor_DEMO.json`. This version is pre-configured to connect to the local mock API server.
 2.  Open your n8n instance and navigate to the **Workflows** dashboard.
 3.  Click **Add Workflow**, then open the workflow menu (top right) and select **Import from File**.
 4.  Upload the `.json` file.
