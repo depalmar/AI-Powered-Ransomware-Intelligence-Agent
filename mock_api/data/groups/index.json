@@ -1,0 +1,5 @@
+[
+  {"group": "lockbit3", "name": "LockBit 3.0", "description": "LockBit 3.0 is a highly organized Ransomware-as-a-Service (RaaS) operation.", "locations": "CIS / Russia", "profile": ["Frequently exploits Citrix Bleed (CVE-2023-4966)", "Uses StealBit for exfiltration"]},
+  {"group": "play", "name": "Play", "description": "Play ransomware group targets critical infrastructure.", "locations": "Unknown", "profile": ["Known for double-extortion tactics", "Uses ProxyNotShell exploits"]},
+  {"group": "blackbasta", "name": "BlackBasta", "description": "BlackBasta focuses on financial services.", "locations": "Eastern Europe", "profile": ["Uses Qakbot for initial access", "Uses Cobalt Strike extensively"]}
+]

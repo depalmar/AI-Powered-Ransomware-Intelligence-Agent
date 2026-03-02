@@ -1,0 +1,28 @@
+[
+  {"group": "lockbit3", "victim": "Victim_01", "activity": "Manufacturing", "country": "US", "discovered": "2026-03-02 08:00:00", "description": "Files encrypted"},
+  {"group": "lockbit3", "victim": "Victim_02", "activity": "Manufacturing", "country": "US", "discovered": "2026-03-02 07:30:00", "description": "Data exfiltrated"},
+  {"group": "lockbit3", "victim": "Victim_03", "activity": "Manufacturing", "country": "GB", "discovered": "2026-03-01 14:00:00", "description": "Internal network down"},
+  {"group": "lockbit3", "victim": "Victim_04", "activity": "Technology", "country": "US", "discovered": "2026-03-01 09:15:00", "description": "Servers encrypted"},
+  {"group": "lockbit3", "victim": "Victim_05", "activity": "Technology", "country": "DE", "discovered": "2026-02-28 11:45:00", "description": "Legacy systems hit"},
+  {"group": "lockbit3", "victim": "Victim_06", "activity": "Financial Services", "country": "IT", "discovered": "2026-02-28 10:00:00", "description": "Client data stolen"},
+  {"group": "lockbit3", "victim": "Victim_07", "activity": "Manufacturing", "country": "CA", "discovered": "2026-02-27 16:20:00", "description": "Production stopped"},
+  {"group": "lockbit3", "victim": "Victim_08", "activity": "Healthcare", "country": "US", "discovered": "2026-02-27 08:00:00", "description": "Patient records accessed"},
+  {"group": "lockbit3", "victim": "Victim_09", "activity": "Construction", "country": "US", "discovered": "2026-02-26 13:00:00", "description": "Blueprints leaked"},
+  {"group": "lockbit3", "victim": "Victim_10", "activity": "Manufacturing", "country": "GB", "discovered": "2026-02-26 09:30:00", "description": "Supply chain impact"},
+  {"group": "lockbit3", "victim": "Victim_11", "activity": "Retail", "country": "FR", "discovered": "2026-02-25 15:00:00", "description": "Point of sale offline"},
+
+  {"group": "play", "victim": "Victim_12", "activity": "Healthcare", "country": "US", "discovered": "2026-03-02 05:00:00", "description": "Hospital network critical"},
+  {"group": "play", "victim": "Victim_13", "activity": "Healthcare", "country": "US", "discovered": "2026-03-01 22:00:00", "description": "Imaging services offline"},
+  {"group": "play", "victim": "Victim_14", "activity": "Healthcare", "country": "GB", "discovered": "2026-03-01 18:00:00", "description": "Emergency services diverted"},
+  {"group": "play", "victim": "Victim_15", "activity": "Manufacturing", "country": "DE", "discovered": "2026-02-28 14:00:00", "description": "Automotive parts delay"},
+  {"group": "play", "victim": "Victim_16", "activity": "Manufacturing", "country": "US", "discovered": "2026-02-28 09:00:00", "description": "Assembly line halted"},
+  {"group": "play", "victim": "Victim_17", "activity": "Construction", "country": "IT", "discovered": "2026-02-27 11:30:00", "description": "Project files encrypted"},
+  {"group": "play", "victim": "Victim_18", "activity": "Healthcare", "country": "US", "discovered": "2026-02-27 06:45:00", "description": "Pharmacy system offline"},
+  {"group": "play", "victim": "Victim_19", "activity": "Education", "country": "GB", "discovered": "2026-02-26 10:00:00", "description": "Student records compromised"},
+
+  {"group": "blackbasta", "victim": "Victim_20", "activity": "Financial Services", "country": "US", "discovered": "2026-03-02 02:00:00", "description": "Trading platform latency"},
+  {"group": "blackbasta", "victim": "Victim_21", "activity": "Financial Services", "country": "DE", "discovered": "2026-03-01 12:00:00", "description": "Bank servers down"},
+  {"group": "blackbasta", "victim": "Victim_22", "activity": "Healthcare", "country": "US", "discovered": "2026-02-28 16:00:00", "description": "Medical records stolen"},
+  {"group": "blackbasta", "victim": "Victim_23", "activity": "Technology", "country": "US", "discovered": "2026-02-27 10:00:00", "description": "Cloud services interrupted"},
+  {"group": "blackbasta", "victim": "Victim_24", "activity": "Financial Services", "country": "US", "discovered": "2026-02-26 14:30:00", "description": "Payment gateway failure"}
+]

@@ -1,0 +1,9 @@
+{
+  "name": "PLAY",
+  "description": "Play ransomware group targets critical infrastructure, heavily utilizing unpatched remote access infrastructure.",
+  "locations": "Unknown",
+  "profile": [
+    "Known for double-extortion tactics targeting healthcare.",
+    "Utilizes ProxyNotShell exploits for Exchange servers."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "name": "LOCKBIT 3.0",
+  "description": "LockBit 3.0 is a highly organized Ransomware-as-a-Service (RaaS) operation.",
+  "locations": "CIS / Russia",
+  "profile": [
+    "Frequently exploits Citrix Bleed (CVE-2023-4966) for initial access.",
+    "Uses StealBit for rapid data exfiltration.",
+    "Targets ESXi hypervisors."
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "BLACKBASTA",
+  "description": "BlackBasta is a financially motivated RaaS group with ties to the Conti syndicate.",
+  "locations": "Eastern Europe",
+  "profile": [
+    "Uses Qakbot for initial access.",
+    "Extensive use of Cobalt Strike for lateral movement."
+  ]
+}

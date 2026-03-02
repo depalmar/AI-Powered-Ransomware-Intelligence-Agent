@@ -33,6 +33,12 @@ To run this workflow in your own environment, you will need:
 4.  **Google Cloud Project:** OAuth2 credentials enabled for the Google Docs API.
 5.  *Note: The `ransomware.live` API is completely free and requires no authentication key.*
 
+### Optional: Mock API for Safe Demos
+
+This repository includes a **Mock API Server** (`mock_api/`) that simulates the `ransomware.live` feed. This is ideal for webinars or offline demos where you need guaranteed, safe, and predictable results.
+
+See [mock_api/README.md](mock_api/README.md) for instructions.
+
 ## 🚀 Installation & Setup
 
 1.  Clone this repository or download the `101_ransomware_threat_monitor.json` file.
