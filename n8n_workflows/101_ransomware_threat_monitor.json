@@ -1,1 +1,1 @@
-{"nodes":[{"parameters":{"folderId":"YOUR_GOOGLE_DRIVE_FOLDER_ID_HERE","webhookId":"YOUR_WEBHOOK_ID_HERE"},"type":"n8n-nodes-base.googleDrive","name":"Google Drive"},{"parameters":{"action":"get","webhookId":"YOUR_WEBHOOK_ID_HERE"},"type":"n8n-nodes-base.webhook","name":"Webhook"}],"metadata":{"createdAt":"2026-03-02 14:05:41","updatedAt":"2026-03-02 14:05:41"}}
+{"nodes":[{"parameters":{"webhookId":"YOUR_WEBHOOK_ID_HERE","output":"aGeTfd2DhpBtr55Ahy2cW"]},"type":"n8n-nodes-base.webhook","name":"Webhook"}],"connections":{}}
