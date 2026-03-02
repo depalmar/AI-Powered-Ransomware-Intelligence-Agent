@@ -5,7 +5,7 @@
 [![Ransomware.live](https://img.shields.io/badge/Data-Ransomware.live-000000?logo=json&logoColor=white)](https://ransomware.live/)
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-**Author:** Raymond De Palma
+**Author:** Raymond DePalma
 
 This repository contains the companion n8n workflow for the **SANS Webinar: AI-Powered Ransomware Intelligence**. 
 
