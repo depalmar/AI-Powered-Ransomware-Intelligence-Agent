@@ -1,1 +1,43 @@
-{"nodes":[{"parameters":{"targetIndustries":["Finance","Healthcare","Energy","Telecommunications"],"filterLogic":"if (data.industry in targetIndustries) { ... }"},"name":"Filter by Industry"},{"parameters":{"executiveDashboard":{"title":"Executive Dashboard","threatLevelAssessment":{...},"geographicDistribution":{...},"industryImpactAnalysis":{...},"timelineAnalysis":{...},"threatOverviewTable":{...},"detailedGroupProfiles":{...},"outputFormats":["Markdown","Slack","Google Docs"]}},"name":"Build Consolidated Brief"},{"parameters":{"folderId":"YOUR_FOLDER_ID"},"name":"Google Doc Report"},{"parameters":{"stickyNotesContent":"Full content descriptions ..."},"name":"Sticky Notes"},{"parameters":{"deduplicationLogic":"function deduplicate(items) { ... }"},"name":"Extract Unique Groups1"},{"parameters":{"conditionalLogic":"if (groupsFound) { ... }"},"name":"Groups Found?1"},{"parameters":{"httpRequest":"GET https://api.example.com/groupProfile"},"name":"Get Group Profile1"},{"parameters":{"slackConfig":{"channel":"#alerts","message":"Alert message ..."}},"name":"Slack Alert1"},{"parameters":{"noActivityLogic":"if (noActivity) { ... }"},"name":"No Activity Detected1"},{"parameters":{"outputMarkdownLogic":"generateMarkdown(data) { ... }"},"name":"Output Markdown File"},{"parameters":{"diverseCompaniesLogic":"generateDiverseCompanies() { ... }"},"name":"Generate Diverse Fake Companies"},{"parameters":{"threatIntelligenceLogic":"AI analysis for ransomware ..."},"name":"Threat Intelligence AI Agent"},{"parameters":{"modelConfig":{"thinkingEnabled":true}},"name":"Claude Model"},{"parameters":{"inputSchema":{"structure":"..."}},"name":"Structured TTP Output"},{"parameters":{"aiAnalysisLogic":"combineAIAnalysisWithMarkdown() { ... }"},"name":"Enhance Brief with AI Analysis"}],"connections":{...}}
+// Full "Filter by Industry" jsCode
+const targetIndustries = [ /* array of industries */ ];
+function filterByIndustry(data) { /* filtering logic */ }
+
+// Full "Build Consolidated Brief" jsCode
+function buildConsolidatedBrief(data) { /* executive dashboard and more */ }
+
+// Complete "Extract Unique Groups1" jsCode
+function extractUniqueGroups(data) { /* deduplication logic */ }
+
+// Complete "Output Markdown File" jsCode
+function outputMarkdownFile(data) { /* binary conversion */ }
+
+// Complete "Generate Diverse Fake Companies" jsCode
+const COMPANY_PREFIXES = [ /* prefixes */ ];
+const COMPANY_SUFFIXES = [ /* suffixes */ ];
+const INDUSTRIES = [ /* industries */ ];
+const COUNTRIES = [ /* countries */ ];
+function generateFakeCompany() { /* random generation functions */ }
+
+// Complete "Threat Intelligence AI Agent"
+const systemMessage = "Your full prompt about threat assessment and more";
+
+// Complete "Structured TTP Output"
+const inputSchema = {
+    threat_level: "",
+    ttps: [ /* array of tactics/techniques */ ],
+    targeting_patterns: { industries: [], regions: [], victim_profile: "" },
+    operational_intelligence: "",
+    recommendations: [ /* recommendations array */ ]
+};
+
+// Complete "Enhance Brief with AI Analysis"
+function enhanceBriefWithAIAnalysis(brief, analysis) { /* combining logic */ }
+
+// All sticky notes with complete descriptions
+const stickyNotes = [ /* array of sticky notes */ ];
+
+// All connections between nodes
+const connections = [ /* connections logic */ ];
+
+// Metadata tags
+const metadataTags = [ /* tags */ ];
