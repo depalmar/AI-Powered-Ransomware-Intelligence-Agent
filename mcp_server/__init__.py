@@ -1,1 +1,0 @@
-"""Ransomware Intelligence MCP Server."""
