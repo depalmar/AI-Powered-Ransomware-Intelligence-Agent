@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ransomware Threat Intelligence Brief — RTI-2026-0302-001</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
   :root {
     --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
@@ -110,51 +109,7 @@
   .disclaimer { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin-top: 2rem; font-size: 0.8rem; color: var(--text-muted); }
   .footer { text-align: center; color: var(--text-muted); font-size: 0.78rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
 
-  .mindmap { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; margin: 1.5rem 0; }
-  .mindmap h4 { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 1px; }
-  .mm-root { display: flex; align-items: center; justify-content: center; gap: 0; }
-  .mm-center { background: linear-gradient(135deg, var(--accent), var(--purple)); color: #fff; padding: 0.8rem 1.4rem; border-radius: 24px; font-weight: 800; font-size: 0.85rem; white-space: nowrap; flex-shrink: 0; }
-  .mm-branches { display: flex; flex-direction: column; gap: 0.6rem; margin-left: 1.5rem; }
-  .mm-branch { display: flex; align-items: center; gap: 0; }
-  .mm-connector { width: 30px; height: 2px; flex-shrink: 0; }
-  .mm-tactic { padding: 0.5rem 1rem; border-radius: 10px; font-weight: 700; font-size: 0.78rem; white-space: nowrap; min-width: 120px; }
-  .mm-connector2 { width: 24px; height: 2px; flex-shrink: 0; }
-  .mm-technique { padding: 0.4rem 0.9rem; border-radius: 8px; font-size: 0.72rem; background: var(--surface2); border: 1px solid var(--border); max-width: 340px; }
-  .mm-technique strong { color: var(--accent); margin-right: 4px; }
-  .mm-technique span { color: var(--text-muted); }
-  .mm-t1 { background: rgba(248,81,73,0.15); color: var(--red); }
-  .mm-c1, .mm-c1b { background: var(--red); }
-  .mm-t2 { background: rgba(210,153,34,0.15); color: var(--orange); }
-  .mm-c2, .mm-c2b { background: var(--orange); }
-  .mm-t3 { background: rgba(188,140,255,0.15); color: var(--purple); }
-  .mm-c3, .mm-c3b { background: var(--purple); }
-  .mm-t4 { background: rgba(249,117,131,0.15); color: var(--pink); }
-  .mm-c4, .mm-c4b { background: var(--pink); }
-
-  .trend-table { width: 100%; border-collapse: collapse; margin: 1.2rem 0; font-size: 0.84rem; }
-  .trend-table th { background: var(--surface2); color: var(--text-muted); text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.5px; padding: 8px 12px; text-align: center; border-bottom: 2px solid var(--border); }
-  .trend-table th:first-child { text-align: left; }
-  .trend-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); text-align: center; }
-  .trend-table td:first-child { text-align: left; font-weight: 600; }
-  .trend-arrow-up { color: var(--red); font-weight: 700; }
-  .trend-arrow-stable { color: var(--text-muted); }
-  .trend-arrow-good { color: var(--green); font-weight: 700; }
-
-  .lifecycle-v2 { display: flex; gap: 0; margin: 1.5rem 0; position: relative; }
-  .lc2-step { flex: 1; text-align: center; padding: 1.5rem 0.6rem 1.2rem; position: relative; border-radius: 12px; transition: transform 0.2s, box-shadow 0.2s; }
-  .lc2-step:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); z-index: 2; }
-  .lc2-step .lc2-icon { font-size: 2.2rem; margin-bottom: 0.5rem; display: block; }
-  .lc2-step .lc2-title { font-weight: 800; font-size: 0.82rem; margin-bottom: 0.4rem; letter-spacing: 0.3px; }
-  .lc2-step .lc2-detail { font-size: 0.7rem; color: var(--text-muted); line-height: 1.4; }
-  .lc2-arrow { display: flex; align-items: center; font-size: 1.4rem; color: var(--text-muted); padding: 0 2px; flex-shrink: 0; }
-  .lc2-s1 { background: linear-gradient(180deg, rgba(231,76,60,0.18), rgba(231,76,60,0.06)); border: 1px solid rgba(231,76,60,0.25); }
-  .lc2-s2 { background: linear-gradient(180deg, rgba(230,126,34,0.18), rgba(230,126,34,0.06)); border: 1px solid rgba(230,126,34,0.25); }
-  .lc2-s3 { background: linear-gradient(180deg, rgba(243,156,18,0.18), rgba(243,156,18,0.06)); border: 1px solid rgba(243,156,18,0.25); }
-  .lc2-s4 { background: linear-gradient(180deg, rgba(52,152,219,0.18), rgba(52,152,219,0.06)); border: 1px solid rgba(52,152,219,0.25); }
-  .lc2-s5 { background: linear-gradient(180deg, rgba(155,89,182,0.18), rgba(155,89,182,0.06)); border: 1px solid rgba(155,89,182,0.25); }
-  .lc2-s6 { background: linear-gradient(180deg, rgba(192,57,43,0.18), rgba(192,57,43,0.06)); border: 1px solid rgba(192,57,43,0.25); }
-
-  @media (max-width: 768px) { .chart-row, .chart-row-3, .group-body { grid-template-columns: 1fr; } .lifecycle-v2 { flex-wrap: wrap; } .lc2-step { min-width: 100%; margin-bottom: 0.3rem; } .lc2-arrow { display: none; } .mm-root { flex-direction: column; } .mm-branches { margin-left: 0; margin-top: 1rem; } }
+  @media (max-width: 768px) { .chart-row, .chart-row-3, .group-body { grid-template-columns: 1fr; } .lifecycle { flex-wrap: wrap; } .lifecycle-step { min-width: 100%; border-radius: 8px !important; margin-bottom: 0.3rem; } .lifecycle-step::after { display: none; } }
   @media print { body { background: #fff; color: #1a1a1a; } .kpi { border-color: #ddd; } th { background: #f0f0f0; } td { border-color: #ddd; } }
 </style>
 </head>
@@ -185,17 +140,6 @@
       <div class="kpi"><div class="value">100%</div><div class="label">Double Extortion</div><div class="delta delta-up">was ~90%</div></div>
       <div class="kpi"><div class="value" style="color:var(--orange);">7.95</div><div class="label">Risk Score</div><div class="delta delta-up">/ 10 composite</div></div>
     </div>
-    <table class="trend-table">
-      <thead><tr><th>Metric</th><th>Current Period</th><th>Prior Period (est.)</th><th>&Delta; Trend</th></tr></thead>
-      <tbody>
-        <tr><td>Total Victims</td><td>24</td><td>~18</td><td class="trend-arrow-up">&#9650; +33%</td></tr>
-        <tr><td>Active Groups</td><td>3</td><td>3</td><td class="trend-arrow-stable">&#9654; Stable</td></tr>
-        <tr><td>Avg. Time-to-Encrypt</td><td>&lt; 48 hrs</td><td>~72 hrs</td><td class="trend-arrow-up">&#9650; Faster</td></tr>
-        <tr><td>Countries Impacted</td><td>8</td><td>6</td><td class="trend-arrow-up">&#9650; +33%</td></tr>
-        <tr><td>Attack Velocity</td><td>0.80 / day</td><td>0.60 / day</td><td class="trend-arrow-up">&#9650; Accelerating</td></tr>
-        <tr><td>Double-Extortion Rate</td><td>100%</td><td>~90%</td><td class="trend-arrow-up">&#9650; Increasing</td></tr>
-      </tbody>
-    </table>
   </div>
 
   <!-- AI THREAT INTELLIGENCE ANALYSIS -->
@@ -226,19 +170,6 @@
         </table>
       </div>
       <div class="chart-box"><h4>TTP Severity Distribution</h4><canvas id="chartTTPSeverity"></canvas></div>
-    </div>
-
-    <div class="mindmap">
-      <h4>MITRE ATT&CK Mindmap</h4>
-      <div class="mm-root">
-        <div class="mm-center">Observed TTPs</div>
-        <div class="mm-branches">
-          <div class="mm-branch"><div class="mm-connector mm-c1"></div><div class="mm-tactic mm-t1">Initial Access</div><div class="mm-connector2 mm-c1b"></div><div class="mm-technique"><strong>T1190</strong> <span>Citrix Bleed CVE-2023-4966 &bull; VPN &amp; firewall zero-days</span></div></div>
-          <div class="mm-branch"><div class="mm-connector mm-c2"></div><div class="mm-tactic mm-t2">Execution</div><div class="mm-connector2 mm-c2b"></div><div class="mm-technique"><strong>T1059</strong> <span>PowerShell LotL &bull; Obfuscated .bat scripts</span></div></div>
-          <div class="mm-branch"><div class="mm-connector mm-c3"></div><div class="mm-tactic mm-t3">Exfiltration</div><div class="mm-connector2 mm-c3b"></div><div class="mm-technique"><strong>T1567</strong> <span>Rclone to Mega/cloud &bull; StealBit custom tooling</span></div></div>
-          <div class="mm-branch"><div class="mm-connector mm-c4"></div><div class="mm-tactic mm-t4">Impact</div><div class="mm-connector2 mm-c4b"></div><div class="mm-technique"><strong>T1486</strong> <span>ESXi hypervisor targeting &bull; Shadow copy deletion</span></div></div>
-        </div>
-      </div>
     </div>
 
     <details style="background:transparent; border-color: rgba(88,166,255,0.15);">
@@ -342,24 +273,18 @@
       <div class="kpi"><div class="value">11</div><div class="label">Peak Week</div><div class="status">Feb 24 &ndash; Mar 02</div></div>
     </div>
     <div class="chart-box" style="margin-top:1rem;"><h4>Weekly Attack Volume by Group</h4><canvas id="chartTimeline"></canvas></div>
-    <div class="chart-box" style="margin-top:1rem;"><h4>Individual Victim Discovery Timeline</h4><canvas id="chartGantt"></canvas></div>
   </div>
 
   <!-- ATTACK LIFECYCLE -->
   <div class="section">
     <h2>Attack Lifecycle &mdash; Composite View</h2>
-    <div class="lifecycle-v2">
-      <div class="lc2-step lc2-s1"><span class="lc2-icon">&#127760;</span><div class="lc2-title">Initial Access</div><div class="lc2-detail">CVE-2023-4966<br>ProxyNotShell<br>Qakbot phishing</div></div>
-      <div class="lc2-arrow">&#10230;</div>
-      <div class="lc2-step lc2-s2"><span class="lc2-icon">&#9889;</span><div class="lc2-title">Execution</div><div class="lc2-detail">PowerShell LotL<br>Cobalt Strike beacon<br>Obfuscated .bat</div></div>
-      <div class="lc2-arrow">&#10230;</div>
-      <div class="lc2-step lc2-s3"><span class="lc2-icon">&#128273;</span><div class="lc2-title">Privilege Esc</div><div class="lc2-detail">Credential dumping<br>LSASS access<br>Token impersonation</div></div>
-      <div class="lc2-arrow">&#10230;</div>
-      <div class="lc2-step lc2-s4"><span class="lc2-icon">&#128256;</span><div class="lc2-title">Lateral Mvmt</div><div class="lc2-detail">RDP pivoting<br>SMB / PsExec<br>WMI execution</div></div>
-      <div class="lc2-arrow">&#10230;</div>
-      <div class="lc2-step lc2-s5"><span class="lc2-icon">&#128228;</span><div class="lc2-title">Exfiltration</div><div class="lc2-detail">Rclone &rarr; Mega<br>StealBit custom<br>Cloud staging</div></div>
-      <div class="lc2-arrow">&#10230;</div>
-      <div class="lc2-step lc2-s6"><span class="lc2-icon">&#128128;</span><div class="lc2-title">Impact</div><div class="lc2-detail">VSS deletion<br>ESXi encryption<br>Network drives</div></div>
+    <div class="lifecycle">
+      <div class="lifecycle-step lc-1"><div class="icon">&#127760;</div><div class="step-title">Initial Access</div><div class="step-detail">CVE-2023-4966<br>ProxyNotShell<br>Qakbot</div></div>
+      <div class="lifecycle-step lc-2"><div class="icon">&#9889;</div><div class="step-title">Execution</div><div class="step-detail">PowerShell LotL<br>Cobalt Strike<br>.bat scripts</div></div>
+      <div class="lifecycle-step lc-3"><div class="icon">&#128273;</div><div class="step-title">Priv Esc</div><div class="step-detail">Cred dump<br>LSASS<br>Token theft</div></div>
+      <div class="lifecycle-step lc-4"><div class="icon">&#128256;</div><div class="step-title">Lateral Mvmt</div><div class="step-detail">RDP pivot<br>PsExec<br>WMI</div></div>
+      <div class="lifecycle-step lc-5"><div class="icon">&#128228;</div><div class="step-title">Exfiltration</div><div class="step-detail">Rclone&rarr;Mega<br>StealBit<br>Cloud staging</div></div>
+      <div class="lifecycle-step lc-6"><div class="icon">&#128128;</div><div class="step-title">Impact</div><div class="step-detail">VSS delete<br>ESXi encrypt<br>Network drives</div></div>
     </div>
   </div>
 
@@ -540,18 +465,6 @@ new Chart(document.getElementById('chartPlay'), { type:'doughnut', data:{ labels
 new Chart(document.getElementById('chartBlackbasta'), { type:'doughnut', data:{ labels:['Financial Svc','Healthcare','Technology'], datasets:[{ data:[3,1,1], backgroundColor:[P.orange,P.blue,P.purple], borderWidth:0, hoverOffset:6 }] }, options:pieCfg });
 
 new Chart(document.getElementById('chartRisk'), { type:'radar', data:{ labels:['Attack Freq','Industry Crit','Geo Spread','Sophistication','Time-to-Encrypt','Dbl Extortion'], datasets:[{ label:'Risk Score', data:[7,9,6,8,8,9], backgroundColor:'rgba(210,153,34,0.15)', borderColor:P.orange, borderWidth:2, pointBackgroundColor:P.orange, pointRadius:5, pointHoverRadius:7 }] }, options:{ responsive:true, scales:{ r:{beginAtZero:true,max:10,ticks:{stepSize:2,backdropColor:'transparent'},grid:{color:'#30363d'},pointLabels:{font:{size:11}}} }, plugins:{ legend:{display:false} } } });
-
-new Chart(document.getElementById('chartGantt'), { type:'scatter', data:{ datasets:[
-  { label:'LockBit 3.0', data:[
-    {x:'2026-03-02',y:3,r:8},{x:'2026-03-02',y:3,r:8},{x:'2026-03-01',y:3,r:8},{x:'2026-03-01',y:3,r:8},{x:'2026-02-28',y:3,r:8},{x:'2026-02-28',y:3,r:8},{x:'2026-02-27',y:3,r:8},{x:'2026-02-27',y:3,r:8},{x:'2026-02-26',y:3,r:8},{x:'2026-02-26',y:3,r:8},{x:'2026-02-25',y:3,r:8}
-  ], backgroundColor:P.red+'cc', pointRadius:7, pointHoverRadius:10 },
-  { label:'Play', data:[
-    {x:'2026-03-02',y:2,r:8},{x:'2026-03-01',y:2,r:8},{x:'2026-03-01',y:2,r:8},{x:'2026-02-28',y:2,r:8},{x:'2026-02-28',y:2,r:8},{x:'2026-02-27',y:2,r:8},{x:'2026-02-27',y:2,r:8},{x:'2026-02-26',y:2,r:8}
-  ], backgroundColor:P.blue+'cc', pointRadius:7, pointHoverRadius:10 },
-  { label:'BlackBasta', data:[
-    {x:'2026-03-02',y:1,r:8},{x:'2026-03-01',y:1,r:8},{x:'2026-02-28',y:1,r:8},{x:'2026-02-27',y:1,r:8},{x:'2026-02-26',y:1,r:8}
-  ], backgroundColor:P.orange+'cc', pointRadius:7, pointHoverRadius:10 }
-]}, options:{ responsive:true, scales:{ x:{type:'time',time:{unit:'day',displayFormats:{day:'MMM dd'}},grid:{color:'#21262d'},title:{display:true,text:'Discovery Date'}}, y:{min:0.5,max:3.5,ticks:{callback:function(v){return['','BlackBasta','Play','LockBit 3.0'][v]||''},stepSize:1},grid:{color:'#21262d'}} }, plugins:{ legend:{position:'bottom',labels:{usePointStyle:true,pointStyle:'circle',padding:12}}, tooltip:{callbacks:{label:function(c){return c.dataset.label+' victim discovered '+c.raw.x}}} } } });
 </script>
 </body>
 </html>
