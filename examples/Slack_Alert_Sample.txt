@@ -1,22 +1,47 @@
 🚨 *RANSOMWARE THREAT BRIEF — 2026-03-02*
+📋 Report ID: `RTI-2026-0302-001` | Classification: `CONFIDENTIAL`
 
-*Threat Level:* 🟠 HIGH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+*Threat Level:* 🟠 *HIGH (7.95 / 10)*
 *Active Groups:* 3 | *Victims:* 24 | *Countries:* 8
 
-🤖 *AI ANALYSIS:*
-• Threat Level: HIGH
-• TTPs Identified: 4
-• Recommendations: 4
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-📊 *TOP TARGETED INDUSTRIES:*
-• Manufacturing: 9 victims
-• Healthcare: 7 victims
-• Financial Services: 4 victims
+🤖 *AI THREAT INTELLIGENCE (Claude):*
+• Assessment: *HIGH* — 85% confidence
+• MITRE TTPs Identified: 4
+  › T1190 — Exploit Public-Facing App (Citrix Bleed)
+  › T1059 — PowerShell LotL Execution
+  › T1567 — Rclone Exfil to Cloud Storage
+  › T1486 — Double-Extortion Encryption
+• Defensive Recommendations: 4
+• Time-to-Encrypt: *< 48 hours* (↓ from ~72 hrs)
 
-🏴‍☠️ *ACTIVE THREAT GROUPS:*
-• *LOCKBIT 3.0* — 11 victim(s) | Manufacturing, Technology
-• *PLAY* — 8 victim(s) | Healthcare, Manufacturing
-• *BLACKBASTA* — 5 victim(s) | Financial Services, Healthcare
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-🔗 _Full intelligence brief available in Google Doc_
+📊 *INDUSTRY IMPACT:*
+• Manufacturing: 9 victims (37.5%) — 🔴 Critical — 📈 +50%
+• Healthcare: 7 victims (29.2%) — 🔴 Critical — 📈 +75%
+• Financial Services: 4 victims (16.7%) — 🟠 High
+• Technology: 2 victims (8.3%) — 🟡 Medium
+
+🌍 *TOP TARGETS:* 🇺🇸 US (12) · 🇬🇧 GB (4) · 🇩🇪 DE (3) · 🇮🇹 IT (2)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🏴‍☠️ *THREAT GROUPS:*
+• *LOCKBIT 3.0* — 11 victims | Score: 9.2/10 | Manufacturing, Tech
+• *PLAY* — 8 victims | Score: 7.8/10 | ⚠️ Healthcare pivot detected
+• *BLACKBASTA* — 5 victims | Score: 7.1/10 | Financial Services
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🛡️ *PRIORITY ACTIONS:*
+🔴 P1 — Patch Citrix, VPNs, Exchange (CVE-2023-4966)
+🔴 P1 — Enforce phishing-resistant MFA
+🟠 P2 — Segment IT/OT/clinical networks
+🟠 P2 — Monitor Rclone & anomalous cloud uploads
+
+🔗 _Full intelligence brief with Mermaid diagrams & MITRE mapping available in Google Doc_
 ⚠️ _All victim identities redacted for security_
