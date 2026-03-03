@@ -4,9 +4,29 @@
 *.swp
 *.swo
 
+# Cursor (local config — rules, skills, agents, MCP keys)
+.cursor/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Gamma presentation recipe (local only)
+examples/Gamma_Presentation_Recipe_v2.md
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+
+# Data
+*.db
+.coverage
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
