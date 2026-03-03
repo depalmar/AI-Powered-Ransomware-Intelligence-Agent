@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ransomware Threat Intelligence Brief — RTI-2026-0302-001</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --surface2: #21262d; --border: #30363d;
+    --text: #e6edf3; --text-muted: #8b949e; --accent: #58a6ff; --orange: #d29922;
+    --red: #f85149; --green: #3fb950; --purple: #bc8cff; --yellow: #e3b341;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; line-height: 1.6; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+
+  /* Header */
+  .header { text-align: center; padding: 3rem 2rem; border-bottom: 1px solid var(--border); margin-bottom: 2rem; }
+  .header h1 { font-size: 2rem; letter-spacing: 2px; margin-bottom: 0.5rem; }
+  .header .meta { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1rem; }
+  .header .meta code { background: var(--surface2); padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; color: var(--orange); }
+  .badge { display: inline-block; padding: 6px 20px; border-radius: 20px; font-weight: 700; font-size: 0.95rem; }
+  .badge-high { background: rgba(210,153,34,0.15); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-critical { background: rgba(248,81,73,0.15); color: var(--red); border: 1px solid var(--red); }
+
+  /* TL;DR */
+  .tldr { background: var(--surface); border-left: 4px solid var(--accent); padding: 1.2rem 1.5rem; border-radius: 0 8px 8px 0; margin-bottom: 2rem; font-size: 0.95rem; }
+  .tldr strong { color: var(--accent); }
+
+  /* Section */
+  .section { margin-bottom: 2.5rem; }
+  .section h2 { font-size: 1.4rem; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .section h3 { font-size: 1.1rem; color: var(--text-muted); margin: 1.5rem 0 0.75rem; }
+
+  /* KPI Cards */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; text-align: center; }
+  .kpi .value { font-size: 2.2rem; font-weight: 800; color: var(--accent); }
+  .kpi .label { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 0.3rem; }
+  .kpi .status { font-size: 0.75rem; margin-top: 0.4rem; }
+
+  /* Tables */
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.88rem; }
+  th { background: var(--surface2); color: var(--text-muted); text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; padding: 10px 14px; text-align: left; border-bottom: 2px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tr:hover td { background: rgba(88,166,255,0.04); }
+  .center { text-align: center; }
+
+  /* Severity badges */
+  .sev { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; }
+  .sev-critical { background: rgba(248,81,73,0.15); color: var(--red); }
+  .sev-high { background: rgba(210,153,34,0.15); color: var(--orange); }
+  .sev-medium { background: rgba(227,179,65,0.15); color: var(--yellow); }
+  .sev-low { background: rgba(63,185,80,0.15); color: var(--green); }
+
+  /* Priority badges */
+  .pri { display: inline-block; padding: 3px 12px; border-radius: 12px; font-size: 0.78rem; font-weight: 700; }
+  .pri-1 { background: rgba(248,81,73,0.2); color: var(--red); }
+  .pri-2 { background: rgba(210,153,34,0.2); color: var(--orange); }
+
+  /* Trend arrows */
+  .trend-up { color: var(--red); font-weight: 600; }
+  .trend-stable { color: var(--text-muted); }
+  .trend-new { color: var(--purple); font-weight: 600; }
+
+  /* Chart containers */
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 1.5rem 0; }
+  .chart-box { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; }
+  .chart-box h4 { text-align: center; color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+  .chart-box canvas { max-height: 280px; }
+
+  /* Attack Lifecycle */
+  .lifecycle { display: flex; gap: 0; margin: 1.5rem 0; overflow-x: auto; }
+  .lifecycle-step { flex: 1; min-width: 150px; text-align: center; padding: 1rem 0.5rem; position: relative; }
+  .lifecycle-step .icon { font-size: 1.8rem; margin-bottom: 0.4rem; }
+  .lifecycle-step .step-title { font-weight: 700; font-size: 0.85rem; margin-bottom: 0.3rem; }
+  .lifecycle-step .step-detail { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+  .lifecycle-step::after { content: '→'; position: absolute; right: -8px; top: 50%; transform: translateY(-50%); font-size: 1.2rem; color: var(--text-muted); }
+  .lifecycle-step:last-child::after { display: none; }
+  .lc-1 { background: rgba(231,76,60,0.12); border-radius: 12px 0 0 12px; }
+  .lc-2 { background: rgba(230,126,34,0.12); }
+  .lc-3 { background: rgba(243,156,18,0.12); }
+  .lc-4 { background: rgba(52,152,219,0.12); }
+  .lc-5 { background: rgba(155,89,182,0.12); }
+  .lc-6 { background: rgba(192,57,43,0.12); border-radius: 0 12px 12px 0; }
+
+  /* Group Profiles */
+  .group-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+  .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .group-header h3 { margin: 0; font-size: 1.15rem; }
+  .score { font-size: 0.9rem; font-weight: 700; }
+  .group-body { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .group-body canvas { max-height: 220px; }
+
+  /* Risk Matrix */
+  .risk-total { font-size: 1.5rem; font-weight: 800; text-align: center; margin: 1rem 0; }
+
+  /* AI callout */
+  .ai-section { background: linear-gradient(135deg, rgba(88,166,255,0.06), rgba(188,140,255,0.06)); border: 1px solid rgba(88,166,255,0.2); border-radius: 12px; padding: 2rem; margin-bottom: 2rem; }
+  .ai-section h2 { border-bottom-color: rgba(88,166,255,0.3); }
+  .ai-powered { display: inline-block; background: rgba(188,140,255,0.15); color: var(--purple); padding: 4px 12px; border-radius: 16px; font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.5px; }
+
+  /* Blockquote */
+  blockquote { border-left: 3px solid var(--accent); padding: 0.8rem 1.2rem; margin: 1rem 0; background: var(--surface); border-radius: 0 8px 8px 0; color: var(--text-muted); font-size: 0.9rem; }
+  blockquote strong { color: var(--text); }
+
+  /* Collapsible */
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; margin: 1rem 0; }
+  summary { padding: 1rem 1.5rem; cursor: pointer; font-weight: 600; color: var(--text-muted); }
+  summary:hover { color: var(--accent); }
+  details[open] summary { border-bottom: 1px solid var(--border); }
+  details > div { padding: 1rem 1.5rem; }
+
+  /* Disclaimer */
+  .disclaimer { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem 1.5rem; margin-top: 2rem; font-size: 0.82rem; color: var(--text-muted); }
+  .footer { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+
+  @media (max-width: 768px) {
+    .chart-row, .group-body { grid-template-columns: 1fr; }
+    .lifecycle { flex-wrap: wrap; }
+    .lifecycle-step { min-width: 100%; border-radius: 8px !important; margin-bottom: 0.5rem; }
+    .lifecycle-step::after { display: none; }
+  }
+  @media print {
+    body { background: #fff; color: #1a1a1a; }
+    .container { max-width: 100%; }
+    .kpi { border-color: #ddd; }
+    th { background: #f0f0f0; }
+    td { border-color: #ddd; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ═══════════════ HEADER ═══════════════ -->
+  <div class="header">
+    <h1>🛡️ RANSOMWARE THREAT INTELLIGENCE BRIEF</h1>
+    <div class="meta">
+      <code>RTI-2026-0302-001</code> &nbsp;|&nbsp; 2026-03-02 &nbsp;|&nbsp; <code>CONFIDENTIAL</code>
+    </div>
+    <div style="margin-top:1rem;">
+      <span class="badge badge-high">🟠 THREAT LEVEL: HIGH</span>
+    </div>
+    <div class="meta" style="margin-top:0.8rem;">Confidence: High (85%) &nbsp;|&nbsp; Window: 2026-02-01 → 2026-03-02 (30 days)</div>
+  </div>
+
+  <!-- ═══════════════ TL;DR ═══════════════ -->
+  <div class="tldr">
+    <strong>TL;DR</strong> — Three ransomware groups (LockBit 3.0, Play, BlackBasta) compromised 24 organizations across 8 countries in the past 30 days. Manufacturing and Healthcare are under sustained attack. Time-to-encrypt is shrinking to under 48 hours. Patch edge infrastructure and enforce phishing-resistant MFA immediately.
+  </div>
+
+  <!-- ═══════════════ EXECUTIVE DASHBOARD ═══════════════ -->
+  <div class="section">
+    <h2>📊 Executive Dashboard</h2>
+    <div class="kpi-grid">
+      <div class="kpi"><div class="value">3</div><div class="label">Active Groups</div><div class="status">✅ Normal</div></div>
+      <div class="kpi"><div class="value">24</div><div class="label">Total Victims</div><div class="status">🟢 Manageable</div></div>
+      <div class="kpi"><div class="value">8</div><div class="label">Countries</div><div class="status">📍 Regional</div></div>
+      <div class="kpi"><div class="value">6</div><div class="label">Industries</div><div class="status">✅ Focused</div></div>
+      <div class="kpi"><div class="value" style="color:var(--red);">&lt;48h</div><div class="label">Time-to-Encrypt</div><div class="status">🔴 Decreasing</div></div>
+      <div class="kpi"><div class="value">0.80</div><div class="label">Victims / Day</div><div class="status">📈 Accelerating</div></div>
+    </div>
+
+    <table>
+      <thead><tr><th>Metric</th><th class="center">Current</th><th class="center">Prior (est.)</th><th class="center">Trend</th></tr></thead>
+      <tbody>
+        <tr><td>Total Victims</td><td class="center">24</td><td class="center">~18</td><td class="center"><span class="trend-up">📈 +33%</span></td></tr>
+        <tr><td>Active Groups</td><td class="center">3</td><td class="center">3</td><td class="center"><span class="trend-stable">➡️ Stable</span></td></tr>
+        <tr><td>Avg. Time-to-Encrypt</td><td class="center">&lt; 48 hrs</td><td class="center">~72 hrs</td><td class="center"><span class="trend-up">🔴 Faster</span></td></tr>
+        <tr><td>Countries Impacted</td><td class="center">8</td><td class="center">6</td><td class="center"><span class="trend-up">📈 +33%</span></td></tr>
+        <tr><td>Attack Velocity</td><td class="center">0.80 / day</td><td class="center">0.60 / day</td><td class="center"><span class="trend-up">📈 Accelerating</span></td></tr>
+        <tr><td>Double-Extortion Rate</td><td class="center">100%</td><td class="center">~90%</td><td class="center"><span class="trend-up">📈 Increasing</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ AI ANALYSIS ═══════════════ -->
+  <div class="ai-section section">
+    <span class="ai-powered">🤖 Powered by Anthropic Claude</span>
+    <h2>AI Threat Intelligence Analysis</h2>
+    <p style="margin-bottom:1rem;">The AI engine analyzed <strong>24 victim records</strong> across <strong>3 active threat groups</strong> and identified <strong>4 distinct TTP clusters</strong>, <strong>3 high-priority industry targets</strong>, and <strong>4 defensive recommendations</strong> requiring immediate action.</p>
+
+    <h3>MITRE ATT&amp;CK — Observed TTPs</h3>
+    <table>
+      <thead><tr><th class="center">#</th><th>MITRE ID</th><th>Tactic</th><th>Technique</th><th>Observed Behavior</th><th class="center">Severity</th></tr></thead>
+      <tbody>
+        <tr><td class="center">1</td><td><strong>T1190</strong></td><td>Initial Access</td><td>Exploit Public-Facing Application</td><td>Exploitation of CVE-2023-4966 (Citrix Bleed) and unpatched VPN/firewall appliances. Multiple groups sharing same entry vector.</td><td class="center"><span class="sev sev-critical">Critical</span></td></tr>
+        <tr><td class="center">2</td><td><strong>T1059</strong></td><td>Execution</td><td>Command &amp; Scripting Interpreter</td><td>Heavy use of PowerShell and obfuscated batch scripts for LotL execution. Evades signature-based detection.</td><td class="center"><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="center">3</td><td><strong>T1567</strong></td><td>Exfiltration</td><td>Exfiltration Over Web Service</td><td>Data staged and exfiltrated to legitimate cloud providers (Mega, Google Drive) using Rclone. LockBit uses custom StealBit. Occurs before encryption.</td><td class="center"><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="center">4</td><td><strong>T1486</strong></td><td>Impact</td><td>Data Encrypted for Impact</td><td>Double-extortion payloads terminate VMware/Hyper-V services and delete shadow copies before encrypting local and network drives.</td><td class="center"><span class="sev sev-critical">Critical</span></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Targeting Analysis</h3>
+    <table>
+      <thead><tr><th>Dimension</th><th>Detail</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Primary Industries</strong></td><td>Healthcare, Manufacturing, Financial Services</td></tr>
+        <tr><td><strong>Geographic Focus</strong></td><td>US (50%), GB (17%), DE (13%), IT (8%)</td></tr>
+        <tr><td><strong>Victim Profile</strong></td><td>Mid-to-large enterprises (500+ employees) with significant OT footprints or critical PII/PHI datastores</td></tr>
+        <tr><td><strong>Selection Criteria</strong></td><td>Organizations with unpatched edge infrastructure, flat network architecture, and high disruption cost</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Operational Intelligence</h3>
+    <blockquote>The threat landscape is dominated by <strong>Ransomware-as-a-Service (RaaS)</strong> affiliates operating with increasing speed and coordination.</blockquote>
+    <ul style="margin:1rem 0 1rem 1.5rem; color:var(--text-muted); font-size:0.9rem;">
+      <li><strong>LockBit 3.0</strong> maintains the highest operational tempo globally, accounting for <strong>46%</strong> of all observed victims.</li>
+      <li><strong>Play</strong> has shifted focus to <strong>regional healthcare providers</strong>, exploiting unpatched remote access infrastructure.</li>
+      <li><strong>BlackBasta</strong> continues to target <strong>financial services</strong>, leveraging Qakbot infections as an initial access broker.</li>
+      <li><strong>Time-to-encrypt has compressed</strong> from ~72 hours to under 48 hours in several observed intrusions.</li>
+    </ul>
+
+    <h3>Defensive Recommendations</h3>
+    <table>
+      <thead><tr><th class="center">Priority</th><th>Action</th><th class="center">Addresses</th><th class="center">Effort</th></tr></thead>
+      <tbody>
+        <tr><td class="center"><span class="pri pri-1">P1</span></td><td><strong>Patch external-facing infrastructure</strong> — Prioritize Citrix, VPN gateways, and Exchange servers. Validate against CVE-2023-4966.</td><td class="center">T1190</td><td class="center"><span class="sev sev-medium">Medium</span></td></tr>
+        <tr><td class="center"><span class="pri pri-1">P1</span></td><td><strong>Enforce Phishing-Resistant MFA</strong> on all remote access and privileged accounts. Disable legacy auth protocols.</td><td class="center">T1190, T1078</td><td class="center"><span class="sev sev-medium">Medium</span></td></tr>
+        <tr><td class="center"><span class="pri pri-2">P2</span></td><td><strong>Segment IT/OT networks</strong> — Implement strict segmentation between corporate IT, OT/clinical, and backup networks.</td><td class="center">T1486, T1021</td><td class="center"><span class="sev sev-high">High</span></td></tr>
+        <tr><td class="center"><span class="pri pri-2">P2</span></td><td><strong>Monitor outbound data transfers</strong> — Alert on Rclone, Mega uploads, and anomalous cloud storage traffic volumes.</td><td class="center">T1567</td><td class="center"><span class="sev sev-low">Low</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ CHARTS: GEO + INDUSTRY ═══════════════ -->
+  <div class="section">
+    <h2>🌍 Geographic &amp; Industry Distribution</h2>
+    <div class="chart-row">
+      <div class="chart-box">
+        <h4>Victims by Country</h4>
+        <canvas id="chartGeo"></canvas>
+      </div>
+      <div class="chart-box">
+        <h4>Victims by Industry</h4>
+        <canvas id="chartIndustry"></canvas>
+      </div>
+    </div>
+
+    <table>
+      <thead><tr><th class="center">Rank</th><th>Country</th><th class="center">Victims</th><th class="center">% of Total</th><th class="center">Heat</th><th>Primary Threat</th></tr></thead>
+      <tbody>
+        <tr><td class="center">1</td><td>🇺🇸 United States</td><td class="center">12</td><td class="center">50.0%</td><td class="center">🔥🔥🔥</td><td>LockBit 3.0, Play, BlackBasta</td></tr>
+        <tr><td class="center">2</td><td>🇬🇧 United Kingdom</td><td class="center">4</td><td class="center">16.7%</td><td class="center">🔥🔥</td><td>LockBit 3.0, Play</td></tr>
+        <tr><td class="center">3</td><td>🇩🇪 Germany</td><td class="center">3</td><td class="center">12.5%</td><td class="center">🔥🔥</td><td>LockBit 3.0, BlackBasta</td></tr>
+        <tr><td class="center">4</td><td>🇮🇹 Italy</td><td class="center">2</td><td class="center">8.3%</td><td class="center">🔥</td><td>LockBit 3.0</td></tr>
+        <tr><td class="center">5</td><td>🇨🇦 Canada</td><td class="center">1</td><td class="center">4.2%</td><td class="center">🔥</td><td>LockBit 3.0</td></tr>
+        <tr><td class="center">6</td><td>🇫🇷 France</td><td class="center">1</td><td class="center">4.2%</td><td class="center">🔥</td><td>Play</td></tr>
+        <tr><td class="center">7</td><td>🇦🇺 Australia</td><td class="center">1</td><td class="center">4.2%</td><td class="center">🔥</td><td>BlackBasta</td></tr>
+      </tbody>
+    </table>
+
+    <table style="margin-top:1.5rem;">
+      <thead><tr><th>Industry</th><th class="center">Victims</th><th class="center">% Total</th><th class="center">Risk</th><th>Key Actor</th><th class="center">Trend</th></tr></thead>
+      <tbody>
+        <tr><td>Manufacturing</td><td class="center">9</td><td class="center">37.5%</td><td class="center"><span class="sev sev-critical">Critical</span></td><td>LockBit 3.0</td><td class="center"><span class="trend-up">📈 +50%</span></td></tr>
+        <tr><td>Healthcare</td><td class="center">7</td><td class="center">29.2%</td><td class="center"><span class="sev sev-critical">Critical</span></td><td>Play</td><td class="center"><span class="trend-up">📈 +75%</span></td></tr>
+        <tr><td>Financial Services</td><td class="center">4</td><td class="center">16.7%</td><td class="center"><span class="sev sev-high">High</span></td><td>BlackBasta</td><td class="center"><span class="trend-stable">➡️ Stable</span></td></tr>
+        <tr><td>Technology</td><td class="center">2</td><td class="center">8.3%</td><td class="center"><span class="sev sev-medium">Medium</span></td><td>LockBit 3.0</td><td class="center"><span class="trend-stable">➡️ Stable</span></td></tr>
+        <tr><td>Construction</td><td class="center">1</td><td class="center">4.2%</td><td class="center"><span class="sev sev-medium">Medium</span></td><td>Play</td><td class="center"><span class="trend-new">🆕 New</span></td></tr>
+        <tr><td>Education</td><td class="center">1</td><td class="center">4.2%</td><td class="center"><span class="sev sev-medium">Medium</span></td><td>Play</td><td class="center"><span class="trend-new">🆕 New</span></td></tr>
+      </tbody>
+    </table>
+    <blockquote style="margin-top:1rem;"><strong>Key Insight:</strong> Healthcare saw the largest increase (+75%) driven by Play's new targeting pivot. Manufacturing remains the most targeted sector overall.</blockquote>
+  </div>
+
+  <!-- ═══════════════ TIMELINE ═══════════════ -->
+  <div class="section">
+    <h2>⏱️ Timeline &amp; Velocity</h2>
+    <div class="kpi-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+      <div class="kpi"><div class="value">30</div><div class="label">Observation Days</div></div>
+      <div class="kpi"><div class="value">0.80</div><div class="label">Victims / Day</div></div>
+      <div class="kpi"><div class="value">6.0</div><div class="label">Victims / Week</div></div>
+      <div class="kpi"><div class="value">11</div><div class="label">Peak Week Victims</div><div class="status">Feb 24 – Mar 02</div></div>
+    </div>
+    <div class="chart-box" style="margin-top:1rem;">
+      <h4>Daily Attack Volume (30-Day Window)</h4>
+      <canvas id="chartTimeline"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ATTACK LIFECYCLE ═══════════════ -->
+  <div class="section">
+    <h2>🔗 Attack Lifecycle — Composite View</h2>
+    <div class="lifecycle">
+      <div class="lifecycle-step lc-1"><div class="icon">🌐</div><div class="step-title">Initial Access</div><div class="step-detail">CVE-2023-4966<br>ProxyNotShell<br>Qakbot phishing</div></div>
+      <div class="lifecycle-step lc-2"><div class="icon">⚡</div><div class="step-title">Execution</div><div class="step-detail">PowerShell LotL<br>Cobalt Strike<br>Obfuscated .bat</div></div>
+      <div class="lifecycle-step lc-3"><div class="icon">🔑</div><div class="step-title">Priv Escalation</div><div class="step-detail">Credential dump<br>LSASS access<br>Token impersonation</div></div>
+      <div class="lifecycle-step lc-4"><div class="icon">🔀</div><div class="step-title">Lateral Movement</div><div class="step-detail">RDP pivoting<br>SMB / PsExec<br>WMI execution</div></div>
+      <div class="lifecycle-step lc-5"><div class="icon">📤</div><div class="step-title">Exfiltration</div><div class="step-detail">Rclone → Mega<br>StealBit<br>Cloud staging</div></div>
+      <div class="lifecycle-step lc-6"><div class="icon">💀</div><div class="step-title">Impact</div><div class="step-detail">Shadow copy delete<br>ESXi encryption<br>Network drives</div></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ THREAT GROUP PROFILES ═══════════════ -->
+  <div class="section">
+    <h2>📋 Threat Group Profiles</h2>
+
+    <!-- LockBit 3.0 -->
+    <div class="group-card">
+      <div class="group-header">
+        <h3>🏴‍☠️ LOCKBIT 3.0</h3>
+        <span class="score" style="color:var(--red);">Threat Score: 9.2 / 10</span>
+      </div>
+      <div class="group-body">
+        <div>
+          <table>
+            <tbody>
+              <tr><td><strong>Confirmed Victims</strong></td><td>11 (46% of total)</td></tr>
+              <tr><td><strong>Geographic Reach</strong></td><td>5 countries</td></tr>
+              <tr><td><strong>Industry Targets</strong></td><td>4 sectors</td></tr>
+              <tr><td><strong>Suspected Origin</strong></td><td>CIS / Russia</td></tr>
+              <tr><td><strong>RaaS Model</strong></td><td>Yes — Affiliate-driven</td></tr>
+              <tr><td><strong>Double Extortion</strong></td><td>100%</td></tr>
+              <tr><td><strong>Avg. Ransom Demand</strong></td><td>$1.5M – $25M (est.)</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:1rem; font-size:0.88rem; color:var(--text-muted);">LockBit 3.0 operates as a RaaS and is currently the most prolific variant globally. Uses custom tools to bypass Windows Defender and EDR. Maintains a bug bounty program.</p>
+          <p style="margin-top:0.5rem; font-size:0.85rem;"><strong>Known TTPs:</strong> CVE-2023-4966 (Citrix Bleed), StealBit exfiltration, ESXi Linux encryptors.</p>
+        </div>
+        <div><canvas id="chartLockbit"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Play -->
+    <div class="group-card">
+      <div class="group-header">
+        <h3>🏴‍☠️ PLAY</h3>
+        <span class="score" style="color:var(--orange);">Threat Score: 7.8 / 10</span>
+      </div>
+      <div class="group-body">
+        <div>
+          <table>
+            <tbody>
+              <tr><td><strong>Confirmed Victims</strong></td><td>8 (33% of total)</td></tr>
+              <tr><td><strong>Geographic Reach</strong></td><td>3 countries</td></tr>
+              <tr><td><strong>Industry Targets</strong></td><td>4 sectors</td></tr>
+              <tr><td><strong>Suspected Origin</strong></td><td>Unknown</td></tr>
+              <tr><td><strong>RaaS Model</strong></td><td>Semi-closed</td></tr>
+              <tr><td><strong>Double Extortion</strong></td><td>100%</td></tr>
+              <tr><td><strong>Avg. Ransom Demand</strong></td><td>$500K – $5M (est.)</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:1rem; font-size:0.88rem; color:var(--text-muted);">Play has demonstrated a sharp pivot toward healthcare. Utilizes unpatched remote access infrastructure for initial compromise.</p>
+          <p style="margin-top:0.5rem; font-size:0.85rem;"><strong>Known TTPs:</strong> ProxyNotShell exploits, double-extortion via .play TOR site.</p>
+          <blockquote style="margin-top:0.8rem; border-left-color:var(--red);">⚠️ Healthcare targeting increased 75% this period.</blockquote>
+        </div>
+        <div><canvas id="chartPlay"></canvas></div>
+      </div>
+    </div>
+
+    <!-- BlackBasta -->
+    <div class="group-card">
+      <div class="group-header">
+        <h3>🏴‍☠️ BLACKBASTA</h3>
+        <span class="score" style="color:var(--orange);">Threat Score: 7.1 / 10</span>
+      </div>
+      <div class="group-body">
+        <div>
+          <table>
+            <tbody>
+              <tr><td><strong>Confirmed Victims</strong></td><td>5 (21% of total)</td></tr>
+              <tr><td><strong>Geographic Reach</strong></td><td>3 countries</td></tr>
+              <tr><td><strong>Industry Targets</strong></td><td>3 sectors</td></tr>
+              <tr><td><strong>Suspected Origin</strong></td><td>Eastern Europe (Conti links)</td></tr>
+              <tr><td><strong>RaaS Model</strong></td><td>Closed — Invite only</td></tr>
+              <tr><td><strong>Double Extortion</strong></td><td>100%</td></tr>
+              <tr><td><strong>Avg. Ransom Demand</strong></td><td>$1M – $10M (est.)</td></tr>
+            </tbody>
+          </table>
+          <p style="margin-top:1rem; font-size:0.88rem; color:var(--text-muted);">BlackBasta is a financially motivated RaaS group with confirmed ties to the former Conti syndicate. Operates a closed, invite-only affiliate model.</p>
+          <p style="margin-top:0.5rem; font-size:0.85rem;"><strong>Known TTPs:</strong> Qakbot initial access broker, Cobalt Strike for lateral movement.</p>
+        </div>
+        <div><canvas id="chartBlackbasta"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ RISK MATRIX ═══════════════ -->
+  <div class="section">
+    <h2>🚨 Risk Matrix</h2>
+    <table>
+      <thead><tr><th>Risk Factor</th><th class="center">Score (1–10)</th><th class="center">Weight</th><th class="center">Weighted</th></tr></thead>
+      <tbody>
+        <tr><td>Attack Frequency</td><td class="center">7</td><td class="center">20%</td><td class="center">1.40</td></tr>
+        <tr><td>Target Industry Criticality</td><td class="center">9</td><td class="center">25%</td><td class="center">2.25</td></tr>
+        <tr><td>Geographic Spread</td><td class="center">6</td><td class="center">10%</td><td class="center">0.60</td></tr>
+        <tr><td>Threat Actor Sophistication</td><td class="center">8</td><td class="center">20%</td><td class="center">1.60</td></tr>
+        <tr><td>Time-to-Encrypt Compression</td><td class="center">8</td><td class="center">15%</td><td class="center">1.20</td></tr>
+        <tr><td>Double-Extortion Prevalence</td><td class="center">9</td><td class="center">10%</td><td class="center">0.90</td></tr>
+      </tbody>
+    </table>
+    <div class="risk-total"><span class="badge badge-high">Composite Risk: 🟠 HIGH — 7.95 / 10</span></div>
+    <div class="chart-box" style="max-width:500px; margin:1rem auto;">
+      <canvas id="chartRisk"></canvas>
+    </div>
+  </div>
+
+  <!-- ═══════════════ METADATA ═══════════════ -->
+  <div class="section">
+    <h2>📌 Report Metadata</h2>
+    <table>
+      <tbody>
+        <tr><td><strong>Report ID</strong></td><td><code>RTI-2026-0302-001</code></td></tr>
+        <tr><td><strong>Generated</strong></td><td>2026-03-02T09:00:00.000Z</td></tr>
+        <tr><td><strong>Data Source</strong></td><td>ransomware.live API v2</td></tr>
+        <tr><td><strong>AI Engine</strong></td><td>Anthropic Claude (Structured TTP Extraction)</td></tr>
+        <tr><td><strong>Workflow Engine</strong></td><td>n8n Automation</td></tr>
+        <tr><td><strong>Classification</strong></td><td>CONFIDENTIAL — INTERNAL USE ONLY</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ═══════════════ APPENDIX ═══════════════ -->
+  <div class="section">
+    <h2>📎 Appendix A — Redacted Victim Ledger</h2>
+    <details>
+      <summary>Click to expand full victim list (24 records)</summary>
+      <div>
+        <h3 style="margin:1rem 0 0.5rem;">LockBit 3.0 — 11 Victims</h3>
+        <table>
+          <thead><tr><th class="center">#</th><th>Company (Redacted)</th><th>Industry</th><th>Country</th><th>Discovered</th><th class="center">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="center">1</td><td>Meridian Industrial Solutions</td><td>Manufacturing</td><td>US</td><td>2026-03-02</td><td class="center">🔴</td></tr>
+            <tr><td class="center">2</td><td>Apex Manufacturing Ltd</td><td>Manufacturing</td><td>US</td><td>2026-03-02</td><td class="center">🔴</td></tr>
+            <tr><td class="center">3</td><td>Northwind Engineering Group</td><td>Manufacturing</td><td>GB</td><td>2026-03-01</td><td class="center">🔴</td></tr>
+            <tr><td class="center">4</td><td>Quantum Technologies Inc</td><td>Technology</td><td>US</td><td>2026-03-01</td><td class="center">🔴</td></tr>
+            <tr><td class="center">5</td><td>Cobalt Dynamics Corp</td><td>Technology</td><td>DE</td><td>2026-02-28</td><td class="center">🔴</td></tr>
+            <tr><td class="center">6</td><td>Zenith Financial Group</td><td>Financial Services</td><td>IT</td><td>2026-02-28</td><td class="center">🔴</td></tr>
+            <tr><td class="center">7</td><td>Summit Manufacturing Ltd</td><td>Manufacturing</td><td>CA</td><td>2026-02-27</td><td class="center">🔴</td></tr>
+            <tr><td class="center">8</td><td>Clearwater Health Partners</td><td>Healthcare</td><td>US</td><td>2026-02-27</td><td class="center">🔴</td></tr>
+            <tr><td class="center">9</td><td>Ironbridge Construction</td><td>Construction</td><td>US</td><td>2026-02-26</td><td class="center">🔴</td></tr>
+            <tr><td class="center">10</td><td>Sterling Manufacturing Ltd</td><td>Manufacturing</td><td>GB</td><td>2026-02-26</td><td class="center">🔴</td></tr>
+            <tr><td class="center">11</td><td>Pacific Retail Group</td><td>Retail</td><td>FR</td><td>2026-02-25</td><td class="center">🔴</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin:1.5rem 0 0.5rem;">Play — 8 Victims</h3>
+        <table>
+          <thead><tr><th class="center">#</th><th>Company (Redacted)</th><th>Industry</th><th>Country</th><th>Discovered</th><th class="center">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="center">12</td><td>Beacon Healthcare Network</td><td>Healthcare</td><td>US</td><td>2026-03-02</td><td class="center">🔴</td></tr>
+            <tr><td class="center">13</td><td>Vanguard Medical Systems</td><td>Healthcare</td><td>US</td><td>2026-03-01</td><td class="center">🔴</td></tr>
+            <tr><td class="center">14</td><td>Atlas Health Partners</td><td>Healthcare</td><td>GB</td><td>2026-03-01</td><td class="center">🔴</td></tr>
+            <tr><td class="center">15</td><td>Cascade Manufacturing Ltd</td><td>Manufacturing</td><td>DE</td><td>2026-02-28</td><td class="center">🔴</td></tr>
+            <tr><td class="center">16</td><td>Horizon Manufacturing Ltd</td><td>Manufacturing</td><td>US</td><td>2026-02-28</td><td class="center">🔴</td></tr>
+            <tr><td class="center">17</td><td>Frontier Construction</td><td>Construction</td><td>IT</td><td>2026-02-27</td><td class="center">🔴</td></tr>
+            <tr><td class="center">18</td><td>Redwood Medical Systems</td><td>Healthcare</td><td>US</td><td>2026-02-27</td><td class="center">🔴</td></tr>
+            <tr><td class="center">19</td><td>Liberty Education Services</td><td>Education</td><td>GB</td><td>2026-02-26</td><td class="center">🔴</td></tr>
+          </tbody>
+        </table>
+
+        <h3 style="margin:1.5rem 0 0.5rem;">BlackBasta — 5 Victims</h3>
+        <table>
+          <thead><tr><th class="center">#</th><th>Company (Redacted)</th><th>Industry</th><th>Country</th><th>Discovered</th><th class="center">Status</th></tr></thead>
+          <tbody>
+            <tr><td class="center">20</td><td>Pinnacle Capital Advisors</td><td>Financial Services</td><td>US</td><td>2026-03-02</td><td class="center">🔴</td></tr>
+            <tr><td class="center">21</td><td>Eclipse Financial Group</td><td>Financial Services</td><td>DE</td><td>2026-03-01</td><td class="center">🔴</td></tr>
+            <tr><td class="center">22</td><td>Titan Healthcare Network</td><td>Healthcare</td><td>US</td><td>2026-02-28</td><td class="center">🔴</td></tr>
+            <tr><td class="center">23</td><td>Genesis Data Systems</td><td>Technology</td><td>US</td><td>2026-02-27</td><td class="center">🔴</td></tr>
+            <tr><td class="center">24</td><td>Keystone Capital Advisors</td><td>Financial Services</td><td>US</td><td>2026-02-26</td><td class="center">🔴</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <!-- ═══════════════ DISCLAIMER ═══════════════ -->
+  <div class="disclaimer">
+    ⚠️ <strong>DISCLAIMER:</strong> All victim names are synthetic and redacted for privacy and compliance. No real organizations are identified.<br>
+    🔒 <strong>SECURITY NOTICE:</strong> This report contains sensitive threat intelligence. Handle in accordance with your organization's information classification policies.
+  </div>
+  <div class="footer">Powered by ransomware.live API + Anthropic Claude + n8n Workflow Automation &nbsp;|&nbsp; SANS Webinar Demo</div>
+
+</div>
+
+<!-- ═══════════════ CHART.JS ═══════════════ -->
+<script>
+const colors = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#34495e'];
+const colorsAlpha = colors.map(c => c + '99');
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
+function pieOpts(title) {
+  return { responsive: true, plugins: { legend: { position: 'bottom', labels: { padding: 15, usePointStyle: true, pointStyle: 'circle' } }, title: { display: false } } };
+}
+
+// Geo Pie
+new Chart(document.getElementById('chartGeo'), {
+  type: 'doughnut',
+  data: { labels: ['US','GB','DE','IT','CA','FR','AU'], datasets: [{ data: [12,4,3,2,1,1,1], backgroundColor: colors.slice(0,7), borderWidth: 0 }] },
+  options: pieOpts()
+});
+
+// Industry Pie
+new Chart(document.getElementById('chartIndustry'), {
+  type: 'doughnut',
+  data: { labels: ['Manufacturing','Healthcare','Financial Svc','Technology','Construction','Education'], datasets: [{ data: [9,7,4,2,1,1], backgroundColor: colors.slice(0,6), borderWidth: 0 }] },
+  options: pieOpts()
+});
+
+// Timeline Bar
+new Chart(document.getElementById('chartTimeline'), {
+  type: 'bar',
+  data: {
+    labels: ['Feb 01-07','Feb 08-14','Feb 15-21','Feb 22-28','Mar 01-02'],
+    datasets: [
+      { label: 'LockBit 3.0', data: [0,1,1,5,4], backgroundColor: '#e74c3c' },
+      { label: 'Play', data: [0,0,1,4,3], backgroundColor: '#3498db' },
+      { label: 'BlackBasta', data: [0,0,1,2,2], backgroundColor: '#f39c12' }
+    ]
+  },
+  options: { responsive: true, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Victims' } } }, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', padding: 15 } } } }
+});
+
+// LockBit Pie
+new Chart(document.getElementById('chartLockbit'), {
+  type: 'doughnut',
+  data: { labels: ['Manufacturing','Technology','Financial Svc','Healthcare','Construction'], datasets: [{ data: [5,2,2,1,1], backgroundColor: colors.slice(0,5), borderWidth: 0 }] },
+  options: pieOpts()
+});
+
+// Play Pie
+new Chart(document.getElementById('chartPlay'), {
+  type: 'doughnut',
+  data: { labels: ['Healthcare','Manufacturing','Construction','Education'], datasets: [{ data: [4,2,1,1], backgroundColor: colors.slice(0,4), borderWidth: 0 }] },
+  options: pieOpts()
+});
+
+// BlackBasta Pie
+new Chart(document.getElementById('chartBlackbasta'), {
+  type: 'doughnut',
+  data: { labels: ['Financial Svc','Healthcare','Technology'], datasets: [{ data: [3,1,1], backgroundColor: colors.slice(0,3), borderWidth: 0 }] },
+  options: pieOpts()
+});
+
+// Risk Radar
+new Chart(document.getElementById('chartRisk'), {
+  type: 'radar',
+  data: {
+    labels: ['Attack Frequency','Industry Criticality','Geo Spread','Actor Sophistication','Time-to-Encrypt','Double Extortion'],
+    datasets: [{ label: 'Risk Score', data: [7,9,6,8,8,9], backgroundColor: 'rgba(210,153,34,0.15)', borderColor: '#d29922', borderWidth: 2, pointBackgroundColor: '#d29922', pointRadius: 4 }]
+  },
+  options: { responsive: true, scales: { r: { beginAtZero: true, max: 10, ticks: { stepSize: 2, backdropColor: 'transparent' }, grid: { color: '#30363d' }, pointLabels: { font: { size: 11 } } } }, plugins: { legend: { display: false } } }
+});
+</script>
+
+</body>
+</html>
