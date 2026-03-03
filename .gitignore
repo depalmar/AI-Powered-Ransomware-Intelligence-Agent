@@ -12,8 +12,9 @@
 .env.local
 .env.*.local
 
-# Gamma presentation recipe (local only)
+# Presentation materials (local only)
 examples/Gamma_Presentation_Recipe_v2.md
+examples/QA_Instructor_Guide.md
 
 # OS
 .DS_Store
@@ -30,3 +31,7 @@ Thumbs.db
 __pycache__/
 *.pyc
 *.pyo
+.mypy_cache/
+
+# Playwright / tooling
+.playwright-mcp/
