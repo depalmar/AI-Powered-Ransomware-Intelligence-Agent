@@ -169,35 +169,22 @@ pie title Victim Distribution by Industry
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 gantt
-    title Attack Timeline — 30-Day Window
+    title Weekly Attack Volume by Group
     dateFormat  YYYY-MM-DD
     axisFormat  %b %d
     section LockBit 3.0
-        Victim 09 (Construction, US)     :done, 2026-02-26, 1d
-        Victim 10 (Manufacturing, GB)    :done, 2026-02-26, 1d
-        Victim 08 (Healthcare, US)       :done, 2026-02-27, 1d
-        Victim 07 (Manufacturing, CA)    :done, 2026-02-27, 1d
-        Victim 05 (Technology, DE)       :done, 2026-02-28, 1d
-        Victim 06 (Financial Svc, IT)    :done, 2026-02-28, 1d
-        Victim 04 (Technology, US)       :done, 2026-03-01, 1d
-        Victim 03 (Manufacturing, GB)    :done, 2026-03-01, 1d
-        Victim 01 (Manufacturing, US)    :crit, 2026-03-02, 1d
-        Victim 02 (Manufacturing, US)    :crit, 2026-03-02, 1d
+        2 victims   :done, 2026-02-08, 7d
+        2 victims   :done, 2026-02-15, 7d
+        5 victims   :crit, 2026-02-22, 7d
+        4 victims   :crit, 2026-03-01, 2d
     section Play
-        Victim 19 (Education, GB)        :done, 2026-02-26, 1d
-        Victim 18 (Healthcare, US)       :done, 2026-02-27, 1d
-        Victim 17 (Construction, IT)     :done, 2026-02-27, 1d
-        Victim 15 (Manufacturing, DE)    :done, 2026-02-28, 1d
-        Victim 16 (Manufacturing, US)    :done, 2026-02-28, 1d
-        Victim 14 (Healthcare, GB)       :done, 2026-03-01, 1d
-        Victim 13 (Healthcare, US)       :crit, 2026-03-01, 1d
-        Victim 12 (Healthcare, US)       :crit, 2026-03-02, 1d
+        1 victim    :done, 2026-02-15, 7d
+        4 victims   :crit, 2026-02-22, 7d
+        3 victims   :crit, 2026-03-01, 2d
     section BlackBasta
-        Victim 24 (Financial Svc, US)    :done, 2026-02-26, 1d
-        Victim 23 (Technology, US)       :done, 2026-02-27, 1d
-        Victim 22 (Healthcare, US)       :done, 2026-02-28, 1d
-        Victim 21 (Financial Svc, DE)    :done, 2026-03-01, 1d
-        Victim 20 (Financial Svc, US)    :crit, 2026-03-02, 1d
+        1 victim    :done, 2026-02-15, 7d
+        2 victims   :done, 2026-02-22, 7d
+        2 victims   :crit, 2026-03-01, 2d
 ```
 
 ---
