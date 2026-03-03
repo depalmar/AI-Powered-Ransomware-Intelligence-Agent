@@ -47,9 +47,9 @@ class RansomwareLiveHandler(http.server.SimpleHTTPRequestHandler):
         # Silence logs for cleaner demo output
         pass
 
-print(f"🛡️  Mock Ransomware.live API running at http://localhost:{PORT}")
-print(f"   - Recent Victims: http://localhost:{PORT}/v2/recentvictims")
-print(f"   - Group Profiles: http://localhost:{PORT}/v2/groups/<name>")
+print(f"[*] Mock Ransomware.live API running at http://localhost:{PORT}")
+print(f"    - Recent Victims: http://localhost:{PORT}/v2/recentvictims")
+print(f"    - Group Profiles: http://localhost:{PORT}/v2/groups/<name>")
 
 with socketserver.TCPServer(("", PORT), RansomwareLiveHandler) as httpd:
     httpd.serve_forever()
