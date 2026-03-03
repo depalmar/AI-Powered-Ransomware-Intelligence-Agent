@@ -18,38 +18,9 @@
 
 ## 📊 EXECUTIVE DASHBOARD
 
-<table>
-<tr>
-<td width="25%" align="center">
-
-**3**
-Active Threat Groups
-`✅ Normal`
-
-</td>
-<td width="25%" align="center">
-
-**24**
-Total Victims
-`🟢 Manageable`
-
-</td>
-<td width="25%" align="center">
-
-**8**
-Countries Affected
-`📍 Regional`
-
-</td>
-<td width="25%" align="center">
-
-**6**
-Industries Targeted
-`✅ Focused`
-
-</td>
-</tr>
-</table>
+| Active Threat Groups | Total Victims | Countries Affected | Industries Targeted |
+|:---:|:---:|:---:|:---:|
+| **3** ✅ Normal | **24** 🟢 Manageable | **8** 📍 Regional | **6** ✅ Focused |
 
 | Metric | Current Period | Prior Period (est.) | Δ Trend |
 |--------|:---:|:---:|:---:|
@@ -73,6 +44,7 @@ The AI engine analyzed 24 victim records across 3 active threat groups and ident
 ### MITRE ATT&CK Mapping
 
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 mindmap
   root((Observed TTPs))
     Initial Access
@@ -134,6 +106,7 @@ mindmap
 ## 🌍 GEOGRAPHIC DISTRIBUTION
 
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 pie title Victim Distribution by Country
     "US" : 12
     "GB" : 4
@@ -159,6 +132,7 @@ pie title Victim Distribution by Country
 ## 🏭 INDUSTRY IMPACT ANALYSIS
 
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 pie title Victim Distribution by Industry
     "Manufacturing" : 9
     "Healthcare" : 7
@@ -193,6 +167,7 @@ pie title Victim Distribution by Industry
 | **Avg. Weekly Volume** | 6.0 victims/week |
 
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 gantt
     title Attack Timeline — 30-Day Window
     dateFormat  YYYY-MM-DD
@@ -231,10 +206,6 @@ gantt
 
 ### 🏴‍☠️ LOCKBIT 3.0 — `Threat Score: 9.2 / 10`
 
-<table>
-<tr>
-<td width="50%">
-
 | Metric | Value |
 |--------|-------|
 | Confirmed Victims | 11 (46% of total) |
@@ -245,10 +216,8 @@ gantt
 | Double Extortion | 100% |
 | Avg. Ransom Demand | $1.5M – $25M (est.) |
 
-</td>
-<td width="50%">
-
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 pie title LockBit 3.0 — Industry Breakdown
     "Manufacturing" : 5
     "Technology" : 2
@@ -256,10 +225,6 @@ pie title LockBit 3.0 — Industry Breakdown
     "Healthcare" : 1
     "Construction" : 1
 ```
-
-</td>
-</tr>
-</table>
 
 **Intelligence Summary:**
 LockBit 3.0 operates as a Ransomware-as-a-Service (RaaS) and is currently the most prolific ransomware variant globally. It utilizes highly evasive techniques including custom tools to bypass Windows Defender and EDR solutions. The group maintains a bug bounty program and active leak site.
@@ -273,10 +238,6 @@ LockBit 3.0 operates as a Ransomware-as-a-Service (RaaS) and is currently the mo
 
 ### 🏴‍☠️ PLAY — `Threat Score: 7.8 / 10`
 
-<table>
-<tr>
-<td width="50%">
-
 | Metric | Value |
 |--------|-------|
 | Confirmed Victims | 8 (33% of total) |
@@ -287,20 +248,14 @@ LockBit 3.0 operates as a Ransomware-as-a-Service (RaaS) and is currently the mo
 | Double Extortion | 100% |
 | Avg. Ransom Demand | $500K – $5M (est.) |
 
-</td>
-<td width="50%">
-
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 pie title Play — Industry Breakdown
     "Healthcare" : 4
     "Manufacturing" : 2
     "Construction" : 1
     "Education" : 1
 ```
-
-</td>
-</tr>
-</table>
 
 **Intelligence Summary:**
 Play ransomware group has demonstrated a sharp pivot toward healthcare in this reporting period. They utilize unpatched remote access infrastructure for initial compromise, particularly targeting Exchange servers and VPN appliances.
@@ -315,10 +270,6 @@ Play ransomware group has demonstrated a sharp pivot toward healthcare in this r
 
 ### 🏴‍☠️ BLACKBASTA — `Threat Score: 7.1 / 10`
 
-<table>
-<tr>
-<td width="50%">
-
 | Metric | Value |
 |--------|-------|
 | Confirmed Victims | 5 (21% of total) |
@@ -329,19 +280,13 @@ Play ransomware group has demonstrated a sharp pivot toward healthcare in this r
 | Double Extortion | 100% |
 | Avg. Ransom Demand | $1M – $10M (est.) |
 
-</td>
-<td width="50%">
-
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 pie title BlackBasta — Industry Breakdown
     "Financial Services" : 3
     "Healthcare" : 1
     "Technology" : 1
 ```
-
-</td>
-</tr>
-</table>
 
 **Intelligence Summary:**
 BlackBasta is a financially motivated RaaS group with confirmed ties to the former Conti syndicate. They operate a closed, invite-only affiliate model, resulting in more consistent and sophisticated operations compared to open RaaS platforms.
@@ -355,6 +300,7 @@ BlackBasta is a financially motivated RaaS group with confirmed ties to the form
 ## 🔗 ATTACK LIFECYCLE — COMPOSITE VIEW
 
 ```mermaid
+%%{init: {'theme': 'dark'}}%%
 flowchart LR
     A["🌐 Initial Access<br/>CVE-2023-4966<br/>ProxyNotShell<br/>Qakbot phishing"] --> B["⚡ Execution<br/>PowerShell LotL<br/>Cobalt Strike beacon<br/>Obfuscated .bat"]
     B --> C["🔑 Privilege Escalation<br/>Credential dumping<br/>LSASS access<br/>Token impersonation"]
@@ -362,12 +308,12 @@ flowchart LR
     D --> E["📤 Exfiltration<br/>Rclone → Mega<br/>StealBit<br/>Cloud staging"]
     E --> F["💀 Impact<br/>Shadow copy deletion<br/>ESXi encryption<br/>Network drive encryption"]
 
-    style A fill:#e74c3c,color:#fff
-    style B fill:#e67e22,color:#fff
-    style C fill:#f39c12,color:#fff
-    style D fill:#3498db,color:#fff
-    style E fill:#9b59b6,color:#fff
-    style F fill:#c0392b,color:#fff
+    style A fill:#e74c3c,color:#fff,stroke:#e74c3c
+    style B fill:#e67e22,color:#fff,stroke:#e67e22
+    style C fill:#f39c12,color:#fff,stroke:#f39c12
+    style D fill:#3498db,color:#fff,stroke:#3498db
+    style E fill:#9b59b6,color:#fff,stroke:#9b59b6
+    style F fill:#c0392b,color:#fff,stroke:#c0392b
 ```
 
 ---
