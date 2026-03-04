@@ -1,82 +1,122 @@
-# 🛡️ AI-Powered Ransomware Intelligence Agent (n8n Workflow)
+# 🛡️ AI-Powered Ransomware Intelligence Agent (n8n Workflows)
 
 [![n8n.io](https://img.shields.io/badge/n8n-Automation-F04747?logo=n8n&logoColor=white)](https://n8n.io/)
-[![Anthropic Claude](https://img.shields.io/badge/AI-Claude_Opus-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+[![Claude](https://img.shields.io/badge/AI-Claude_Opus-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+[![Ollama](https://img.shields.io/badge/Local_LLM-Ollama-000000?logo=ollama&logoColor=white)](https://ollama.ai/)
 [![Ransomware.live](https://img.shields.io/badge/Data-Ransomware.live-000000?logo=json&logoColor=white)](https://ransomware.live/)
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
 
-**Author:** Raymond DePalma
+**Author:** Raymond DePalma &nbsp;|&nbsp; Companion to the **SANS Ransomware Intelligence Webinar**
 
-This repository contains the companion n8n workflow for the **SANS Webinar: AI-Powered Ransomware Intelligence**. 
+Automated threat intelligence pipelines that continuously monitor ransomware leak sites, run AI-powered analysis, and deliver rich interactive reports — to Slack, Google Docs, email, and your SIEM.
 
-The `101_ransomware_threat_monitor.json` workflow is an automated threat intelligence pipeline that continuously monitors ransomware leak sites, enriches threat actor profiles, utilizes Anthropic's Claude to extract Tactics, Techniques, and Procedures (TTPs), and delivers a consolidated intelligence brief directly to Slack and Google Docs.
+---
 
-## ✨ Key Features
+## 📊 Workflow Progression
 
-* **Automated Data Ingestion:** Polls the free `ransomware.live` API (v2) every 6 hours for newly posted victims.
-* **Demo-Safe Redaction:** Automatically strips out real victim identities and replaces them with randomized, realistic fake company data. This ensures the workflow is 100% safe to run during live demos, recordings, and webinars.
-* **Targeted Industry Filtering:** Isolates threats strictly relevant to your organizational sector (e.g., healthcare, finance, manufacturing) using the API's `activity` field.
-* **AI-Powered Analysis:** Leverages a LangChain AI Agent running Anthropic's Claude model to evaluate the data and automatically generate:
-    * Overall Threat Level Assessments
-    * Observed TTPs 
-    * Targeting Patterns (Geographic & Industry)
-    * Defensive Recommendations
-* **Consolidated Reporting:** Aggregates all active threat groups and victim data into **one** comprehensive report, eliminating alert fatigue.
+| Level | File | LLM | Key Capabilities | Visibility |
+|-------|------|-----|-----------------|------------|
+| **101** | `101_ransomware_threat_monitor.json` | Claude Opus | Monitor → AI analysis → HTML + Slack report | ✅ Public |
+| **101 (Ollama)** | `101_ransomware_threat_monitor_ollama.json` | Ollama (local) | Same as 101, fully local — no API costs | ✅ Public |
+| **200** | `200_ransomware_intel_advanced.json` | Claude Opus | + IOC enrichment, YARA rules, historical trending, email + JIRA | ✅ Public |
+| **200 (Ollama)** | `200_ransomware_intel_advanced_ollama.json` | Ollama (local) | Same as 200, fully local | ✅ Public |
+| **300** | `300_ransomware_attribution_platform.json` | Claude Opus | + Multi-signal attribution, SIEM integration, IR playbooks, STIX export | 🔒 Webinar |
+
+> **Level 300** is available to webinar attendees in a separate private repository.
+
+---
+
+## ✨ What the 101 Workflow Produces
+
+Import, activate, and within minutes you get a full dark-themed threat intelligence brief:
+
+- **8 KPI cards** — Active groups, total victims, countries, industries, time-to-encrypt, victims/day, double extortion rate, composite risk score
+- **MITRE ATT&CK table** — Observed TTPs with technique IDs, tactic phases, and severity badges
+- **5 Chart.js charts** — Geographic doughnut, industry doughnut, TTP severity polar area, group comparison, risk radar
+- **Attack lifecycle visualization** — 6-step colored flow (Initial Access → Execution → Priv Esc → Lateral Mvmt → Exfiltration → Impact)
+- **Group profile cards** — Per-actor victim breakdown with individual industry charts
+- **Slack alert** — Concise threat summary with group and victim stats
+- **Google Doc** — Full markdown brief (optional)
+
+---
 
 ## 🛠️ Prerequisites
 
-To run this workflow in your own environment, you will need:
+**For the Claude version (101/200):**
+1. [n8n instance](https://n8n.io/) — self-hosted or cloud
+2. Anthropic API key
+3. Slack webhook URL
+4. Google Docs OAuth (optional)
 
-1.  **[n8n Instance](https://n8n.io/):** Either self-hosted or n8n Cloud.
-2.  **Anthropic API Key:** For the Claude Opus AI model.
-3.  **Slack Workspace:** A configured Slack App or Webhook URL to receive alerts.
-4.  **Google Cloud Project:** OAuth2 credentials enabled for the Google Docs API.
-5.  *Note: The `ransomware.live` API is completely free and requires no authentication key.*
+**For the Ollama version (101/200):**
+1. [n8n instance](https://n8n.io/)
+2. [Ollama](https://ollama.ai/) running locally — `ollama serve`
+3. A compatible model pulled — `ollama pull llama3.1`
+4. Slack webhook URL
+
+**Compatible Ollama models:** `llama3.1` (recommended), `mistral`, `gemma2`, `qwen2.5`
+
+**For the 200 level (additional):**
+- VirusTotal API key (free tier: 500 req/day)
+- AbuseIPDB API key (free tier available)
+- SMTP/SendGrid for email delivery
+- JIRA credentials (optional)
+
+> **Note:** The `ransomware.live` API is completely free and requires no authentication.
 
 ### Optional: Mock API for Safe Demos
 
-This repository includes a **Mock API Server** (`mock_api/`) that simulates the `ransomware.live` feed. This is ideal for webinars or offline demos where you need guaranteed, safe, and predictable results.
+This repository includes a **Mock API Server** (`mock_api/`) that simulates the `ransomware.live` feed — ideal for webinars or offline demos. See [mock_api/README.md](mock_api/README.md).
 
-See [mock_api/README.md](mock_api/README.md) for instructions.
+---
 
-## 🚀 Installation & Setup
+## 🚀 Quick Start
 
-1.  Clone this repository or download the `101_ransomware_threat_monitor.json` file.
-    *   **FOR WEBINAR DEMOS:** Use `n8n_workflows/101_ransomware_threat_monitor_DEMO.json`. This version is pre-configured to connect to the local mock API server.
-2.  Open your n8n instance and navigate to the **Workflows** dashboard.
-3.  Click **Add Workflow**, then open the workflow menu (top right) and select **Import from File**.
-4.  Upload the `.json` file.
-5.  **Configure Credentials:**
-    * Double-click the `Claude Model` node and add your Anthropic API credentials.
-    * Double-click the `Slack Alert1` node and connect your Slack OAuth/Webhook credentials.
-    * Double-click the `Google Doc Report` node and connect your Google Docs OAuth credentials. Replace the `[REDACTED_FOLDER_ID]` with your target Google Drive folder ID.
-6.  **Customize the Filter (Optional):** Open the `Filter by Industry` node and modify the `targetIndustries` array to match the sectors you want to monitor.
-7.  Click **Save** and toggle the workflow to **Active**.
+### Claude (101)
 
-## 📊 Workflow Architecture
+1. Download `n8n_workflows/101_ransomware_threat_monitor.json`
+2. Import into n8n (**Workflows → Add Workflow → Import from File**)
+3. Configure credentials: Anthropic API key, Slack webhook, Google Docs OAuth
+4. Customize the `Filter by Industry` node with your target sectors
+5. Activate and trigger manually to test
 
-The pipeline follows this logical flow:
-1.  **Trigger:** Executes every 6 hours.
-2.  **Fetch:** Calls `GET /v2/recentvictims`.
-3.  **Redact:** Overwrites victim data with unique fake names.
-4.  **Filter:** Drops victims outside the defined industry scope.
-5.  **Deduplicate:** Groups victims by threat actor.
-6.  **Enrich:** Fetches detailed group intelligence profiles for each active actor.
-7.  **Analyze (AI):** Passes the dataset to Claude to extract structured TTPs and intelligence.
-8.  **Distribute:** Formats the final Markdown and sends it to Slack and Google Docs.
+### Ollama (101) — fully local, no API costs
+
+1. Start Ollama and pull a model: `ollama pull llama3.1`
+2. Download `n8n_workflows/101_ransomware_threat_monitor_ollama.json`
+3. Import into n8n
+4. Configure Slack webhook
+5. The Ollama node connects to `http://localhost:11434` by default — no API key needed
+
+### Demo Mode (offline)
+
+Use `101_ransomware_threat_monitor_DEMO.json` with the included `mock_api/` server for live demos without connecting to real threat feeds.
+
+---
+
+## 📋 Workflow Architecture (101)
+
+```
+Schedule (6h) → Fetch Victims API → Redact Identities → Filter by Industry
+     → Deduplicate by Group → Fetch Group Profiles → Build Consolidated Brief
+     → AI Threat Analysis (Claude / Ollama) → Enhance Brief
+     → Output HTML File + Slack Alert + Google Doc
+```
+
+---
 
 ## 📄 Sample Outputs
 
-Review the [examples/](examples/) directory to see the actual output generated by this workflow:
+See the [examples/](examples/) directory:
 
-*   **[Ransomware Threat Brief (Markdown)](examples/Ransomware_Threat_Brief_Sample.md):** The comprehensive report with Mermaid diagrams and MITRE ATT&CK mapping.
-*   **[Ransomware Threat Brief (HTML)](examples/Ransomware_Threat_Brief_Sample.html):** Self-contained HTML report with interactive Chart.js charts — open directly in any browser.
-*   **[Slack Alert (Text)](examples/Slack_Alert_Sample.txt):** The concise summary sent to Slack channels for immediate awareness.
+- **[HTML Report](examples/Ransomware_Threat_Brief_Sample.html)** — Full interactive report with Chart.js charts, open in any browser
+- **[Markdown Report](examples/Ransomware_Threat_Brief_Sample.md)** — Full brief with Mermaid diagrams and MITRE mapping
+- **[Slack Alert](examples/Slack_Alert_Sample.txt)** — Concise channel notification
+
+---
 
 ## 📝 License
 
-This project is licensed under the **Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)**. 
+**[CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/)** — Free for educational and defensive use with attribution. Commercial use prohibited.
 
-You are free to use, share, and adapt this material for educational and defensive purposes, provided you give appropriate credit and **do not use the material for commercial purposes**. See the [LICENSE](LICENSE) file for details.
-
-*Disclaimer: This workflow handles simulated threat intelligence data but connects to real-world threat feeds. Always handle intelligence reports with appropriate operational security (OPSEC).*
+*Disclaimer: This workflow connects to real-world threat feeds. Handle intelligence reports with appropriate OPSEC.*
