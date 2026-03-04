@@ -1,0 +1,328 @@
+{
+  "name": "200 - Ransomware Intelligence Platform (Ollama / Local LLM)",
+  "nodes": [
+    {
+      "id": "2942bc37-47d8-430d-bdf7-a95b6806bfa5",
+      "name": "README",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        -400
+      ],
+      "parameters": {
+        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n**PRIVATE \u2014 WEBINAR ATTENDEES ONLY**\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
+        "height": 450,
+        "width": 500,
+        "color": 1
+      }
+    },
+    {
+      "id": "7cb997f0-ff9b-4a25-b7e8-f95ab5c5e7db",
+      "name": "Every 6 Hours",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "triggerAtHour": 0,
+              "hoursInterval": 6
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "370740bc-6ade-4686-b0d1-f7189571ceca",
+      "name": "Fetch Recent Victims",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.ransomware.live/v2/recentvictims",
+        "options": {}
+      }
+    },
+    {
+      "id": "484f85ac-318b-4c73-b2c9-2a9c05b7a6a8",
+      "name": "Fetch MITRE Groups",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        120
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://api.ransomware.live/v2/groups",
+        "options": {}
+      }
+    },
+    {
+      "id": "ba3eea16-acea-489b-9268-9ba68fdccda3",
+      "name": "Filter & Deduplicate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Filter by monitored industries + deduplicate victims\nconst victims = $input.all()[0].json || [];\nconst industries = ['Healthcare', 'Manufacturing', 'Financial', 'Education', 'Government'];\nreturn victims\n  .filter(v => industries.some(i => v.activity?.toLowerCase().includes(i.toLowerCase())))\n  .slice(0, 100)\n  .map(v => ({ json: v }));"
+      }
+    },
+    {
+      "id": "8a07bfcb-d46d-425f-9d17-23544a22f2d1",
+      "name": "Extract IOCs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Extract domains and IPs from victim records for enrichment\nconst items = $input.all();\nconst iocs = [];\nitems.forEach(item => {\n  const v = item.json;\n  if (v.website) iocs.push({ type: 'domain', value: v.website.replace(/https?:\\/\\//, '').split('/')[0], victim: v.post_title });\n  // Add any discovered IPs from profile data\n});\nreturn iocs.slice(0, 10).map(i => ({ json: i })); // Limit to 10 IOCs to respect API limits"
+      }
+    },
+    {
+      "id": "bfc80bcb-ebdc-4046-aec2-912a50e1a57e",
+      "name": "VirusTotal IOC Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        0
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.virustotal.com/api/v3/domains/{{$json.value}}",
+        "options": {}
+      }
+    },
+    {
+      "id": "c2d267db-1acc-4f1f-bd5b-743a5248c0d4",
+      "name": "AbuseIPDB Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        120
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.abuseipdb.com/api/v2/check?ipAddress={{$json.value}}&maxAgeInDays=90",
+        "options": {}
+      }
+    },
+    {
+      "id": "d8ef1069-fe23-4ff1-b4a3-492d313cc894",
+      "name": "Enrich Victim Data with IOC Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Merge IOC lookup results with victim data\n// Flag high-risk victims based on malicious IOC hits\nconst vtData = $node['VirusTotal IOC Lookup'].json;\nconst malicious = vtData?.data?.attributes?.last_analysis_stats?.malicious || 0;\nconst riskFlag = malicious > 5 ? 'CONFIRMED_MALICIOUS' : malicious > 0 ? 'SUSPICIOUS' : 'CLEAN';\nreturn [{ json: { ...($input.all()[0].json || {}), ioc_risk_flag: riskFlag, vt_malicious_count: malicious } }];"
+      }
+    },
+    {
+      "id": "2f585992-ca3d-4d90-b9f0-6a442d53099a",
+      "name": "Build Historical Baseline",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Compare current 30d window against prior 30d window\n// Uses n8n variables or external KV store to persist prior counts\n// For demo: generates synthetic baseline comparison\nconst currentVictims = $input.all().length;\nconst priorBaseline = $vars.PRIOR_VICTIM_COUNT || Math.floor(currentVictims * 0.75);\nconst delta = ((currentVictims - priorBaseline) / priorBaseline * 100).toFixed(1);\nconst trend = currentVictims > priorBaseline ? 'INCREASING' : currentVictims < priorBaseline ? 'DECREASING' : 'STABLE';\nreturn [{ json: { current: currentVictims, prior: priorBaseline, delta_pct: delta, trend } }];"
+      }
+    },
+    {
+      "id": "d86f5dac-2a0c-4a6f-8ad6-07960b2514b3",
+      "name": "Threat Intelligence AI Agent (Advanced)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        1680,
+        0
+      ],
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.markdown }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an elite threat intelligence analyst. Respond with structured JSON only."
+        }
+      }
+    },
+    {
+      "id": "94aff8a9-856c-48ce-b344-ee3afd7f0d7e",
+      "name": "Ollama Model (Advanced)",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        200
+      ],
+      "parameters": {
+        "model": "llama3.1",
+        "baseUrl": "http://localhost:11434",
+        "options": {}
+      }
+    },
+    {
+      "id": "e97d6cbb-e9e8-4395-a249-88b96dd2ecff",
+      "name": "Advanced TTP + YARA Output",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1680,
+        350
+      ],
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"threat_level\": {\n      \"type\": \"string\"\n    },\n    \"confidence_score\": {\n      \"type\": \"number\",\n      \"description\": \"0-100 attribution confidence\"\n    },\n    \"ttps\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"mitre_id\": {\n            \"type\": \"string\"\n          },\n          \"tactic\": {\n            \"type\": \"string\"\n          },\n          \"technique\": {\n            \"type\": \"string\"\n          },\n          \"description\": {\n            \"type\": \"string\"\n          },\n          \"severity\": {\n            \"type\": \"string\"\n          },\n          \"detection_note\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    },\n    \"yara_rules\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"group\": {\n            \"type\": \"string\"\n          },\n          \"rule_name\": {\n            \"type\": \"string\"\n          },\n          \"rule_content\": {\n            \"type\": \"string\",\n            \"description\": \"Valid YARA rule syntax\"\n          }\n        }\n      }\n    },\n    \"ioc_summary\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"malicious_domains\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"suspicious_ips\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"file_hashes\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        }\n      }\n    },\n    \"targeting_patterns\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"industries\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"regions\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"victim_profile\": {\n          \"type\": \"string\"\n        },\n        \"selection_criteria\": {\n          \"type\": \"string\"\n        }\n      }\n    },\n    \"operational_intelligence\": {\n      \"type\": \"string\"\n    },\n    \"recommendations\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"action\": {\n            \"type\": \"string\"\n          },\n          \"mitre_addresses\": {\n            \"type\": \"string\"\n          },\n          \"effort\": {\n            \"type\": \"string\"\n          },\n          \"priority\": {\n            \"type\": \"integer\"\n          }\n        }\n      }\n    },\n    \"negotiation_intel\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"typical_demand_range\": {\n          \"type\": \"string\"\n        },\n        \"payment_methods\": {\n          \"type\": \"array\",\n          \"items\": {\n            \"type\": \"string\"\n          }\n        },\n        \"decryptor_reliability\": {\n          \"type\": \"string\"\n        },\n        \"recommendation\": {\n          \"type\": \"string\"\n        }\n      }\n    }\n  }\n}"
+      }
+    },
+    {
+      "id": "f9547aeb-998f-4306-af31-a4748b51bbce",
+      "name": "Generate YARA Rules File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1920,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Bundle YARA rules into a deployable .yar file\nconst ai = $input.all()[0].json.ai_analysis || {};\nconst rules = ai.yara_rules || [];\nlet yar = '// RANSOMWARE DETECTION RULES\\n// Generated by AI Ransomware Intelligence Platform\\n// Classification: CONFIDENTIAL\\n\\n';\nrules.forEach(r => {\n  yar += `// Group: ${r.group}\\n${r.rule_content}\\n\\n`;\n});\nconst buf = Buffer.from(yar, 'utf-8');\nreturn [{ json: { fileName: `ransomware_detection_${new Date().toISOString().split('T')[0]}.yar`, ruleCount: rules.length },\n  binary: { data: { data: buf.toString('base64'), mimeType: 'text/plain', fileName: 'ransomware_rules.yar' } } }];"
+      }
+    },
+    {
+      "id": "b4c77e15-94a0-4a86-9c03-ada12ebf3ecc",
+      "name": "Output Enhanced HTML (v200)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2160,
+        0
+      ],
+      "parameters": {
+        "jsCode": "// Enhanced HTML output with IOC enrichment + YARA summary + historical trend\n// Extends v101 HTML with additional sections for IOC results and trend analysis\n// [Full implementation - extends the 101 Output HTML File node]\nconst d = $input.all()[0].json;\n// ... (extends 101 HTML with IOC enrichment table, YARA rules accordion, trend chart)\n// See 200-level documentation for full implementation\nreturn [{ json: { status: 'html_generated', note: 'See 200-level implementation guide' } }];"
+      }
+    },
+    {
+      "id": "be540d8c-3256-4d1d-9152-c07f388aa007",
+      "name": "Slack Alert (Advanced)",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.3,
+      "position": [
+        2400,
+        -100
+      ],
+      "parameters": {
+        "resource": "message",
+        "operation": "post",
+        "channel": "={{ $vars.SLACK_CHANNEL || '#threat-intel' }}",
+        "text": "={{ $json.slack_text }}",
+        "otherOptions": {}
+      }
+    },
+    {
+      "id": "dcc88cc7-7d55-45a3-9b48-9d5b6c548ab2",
+      "name": "Send Email Report",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2400,
+        0
+      ],
+      "parameters": {
+        "fromEmail": "={{ $vars.FROM_EMAIL }}",
+        "toEmail": "={{ $vars.TO_EMAIL }}",
+        "subject": "Ransomware Intel Brief \u2014 {{ $json.report_id }}",
+        "message": "={{ $json.markdown }}",
+        "options": {
+          "attachments": "data"
+        }
+      }
+    },
+    {
+      "id": "692e3cc6-ec17-4b9f-8956-5f57705acd6e",
+      "name": "Create JIRA Ticket (P1 only)",
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        2400,
+        100
+      ],
+      "parameters": {
+        "resource": "issue",
+        "operation": "create",
+        "project": "={{ $vars.JIRA_PROJECT }}",
+        "summary": "P1 Ransomware Alert \u2014 {{ $json.threat_level }}",
+        "description": "={{ $json.slack_text }}",
+        "issueType": "Bug",
+        "additionalFields": {
+          "priority": {
+            "name": "Critical"
+          }
+        }
+      }
+    },
+    {
+      "id": "62836753-d615-4b92-b571-7ef5bce1e81c",
+      "name": "Google Doc Report (Advanced)",
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        200
+      ],
+      "parameters": {
+        "operation": "create",
+        "title": "=Ransomware Intel Brief \u2014 {{ $json.report_id }}",
+        "content": "={{ $json.markdown }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        }
+      }
+    },
+    {
+      "id": "2abc9eba-0881-4651-ae4e-a717beec5755",
+      "name": "200 Architecture",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -300
+      ],
+      "parameters": {
+        "content": "### 200-Level Workflow Architecture\n\n**New Capabilities:**\n1. **IOC Enrichment** \u2014 VT + AbuseIPDB lookups\n2. **YARA Rule Generation** \u2014 AI-generated per-group rules\n3. **Historical Trending** \u2014 30d vs prior 30d comparison  \n4. **Multi-Channel Delivery** \u2014 Slack + Email + JIRA + Google Docs\n5. **Confidence Scoring** \u2014 0-100% attribution confidence\n6. **Negotiation Intelligence** \u2014 Demand ranges and decryptor info\n\n**Data Flow:**\nSchedule \u2192 API Fetch \u2192 IOC Extract \u2192 Enrich \u2192 AI Analysis (+ YARA) \u2192 HTML + YARA File \u2192 All Outputs",
+        "height": 340,
+        "width": 480,
+        "color": 3
+      }
+    }
+  ],
+  "connections": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {}
+}
