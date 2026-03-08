@@ -277,3 +277,66 @@ class TestContentChecks:
         assert "300" not in name, (
             f"{os.path.basename(path)}: workflow name references removed 300-level"
         )
+
+
+# ---------------------------------------------------------------------------
+# Test: JavaScript code node integrity
+# ---------------------------------------------------------------------------
+
+class TestJsCodeIntegrity:
+    """Catch corrupted JavaScript in Code nodes (e.g. bash eating $input)."""
+
+    def _get_code_nodes(self, data):
+        """Return list of (name, jsCode) for all Code nodes."""
+        result = []
+        for node in data.get("nodes", []):
+            if node.get("type") == "n8n-nodes-base.code":
+                code = node.get("parameters", {}).get("jsCode", "")
+                result.append((node.get("name", "?"), code))
+        return result
+
+    def test_no_corrupted_input_refs(self, workflow_file):
+        """
+        Bash interpolation can eat $input, leaving \\.all() or \\.first().
+        THIS TEST CATCHES THE BUG WHERE BASH CONSUMED $input REFERENCES.
+        """
+        path, data = workflow_file
+        broken = []
+        for name, code in self._get_code_nodes(data):
+            if "\\.all()" in code:
+                broken.append(f"{name}: has '\\.all()' (should be '$input.all()')")
+            if "\\.first()" in code:
+                broken.append(f"{name}: has '\\.first()' (should be '$input.first()')")
+        assert not broken, (
+            f"{os.path.basename(path)}: corrupted $input references: {broken}"
+        )
+
+    def test_no_empty_assignments(self, workflow_file):
+        """
+        Bash interpolation can eat template literals, leaving 'const x = ;'.
+        THIS TEST CATCHES THE BUG WHERE BASH CONSUMED TEMPLATE LITERALS.
+        """
+        path, data = workflow_file
+        broken = []
+        for name, code in self._get_code_nodes(data):
+            for line in code.split("\\n"):
+                stripped = line.strip()
+                if stripped.startswith("const ") and stripped.endswith("= ;"):
+                    broken.append(f"{name}: empty assignment '{stripped}'")
+                if stripped.startswith("let ") and stripped.endswith("= ;"):
+                    broken.append(f"{name}: empty assignment '{stripped}'")
+        assert not broken, (
+            f"{os.path.basename(path)}: empty assignments (template literals lost): {broken}"
+        )
+
+    def test_balanced_backticks(self, workflow_file):
+        """Template literals need matched backticks."""
+        path, data = workflow_file
+        broken = []
+        for name, code in self._get_code_nodes(data):
+            count = code.count("`")
+            if count % 2 != 0:
+                broken.append(f"{name}: {count} backticks (odd = unmatched)")
+        assert not broken, (
+            f"{os.path.basename(path)}: unbalanced backticks in Code nodes: {broken}"
+        )
