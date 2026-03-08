@@ -180,7 +180,7 @@
       "parameters": {
         "model": {
           "__rl": true,
-          "value": "claude-opus-4-6",
+          "value": "claude-sonnet-4-5-20250514",
           "mode": "list"
         },
         "options": {
