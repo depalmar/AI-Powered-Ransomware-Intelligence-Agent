@@ -216,6 +216,12 @@
         "options": {
           "thinking": true
         }
+      },
+      "credentials": {
+        "anthropicApi": {
+          "id": "[CONFIGURE_ME]",
+          "name": "Anthropic account"
+        }
       }
     },
     {
@@ -273,6 +279,12 @@
         "channel": "={{ $vars.SLACK_CHANNEL || '#threat-intel' }}",
         "text": "={{ $json.slack_text }}",
         "otherOptions": {}
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "[CONFIGURE_ME]",
+          "name": "Slack account"
+        }
       }
     },
     {
@@ -291,6 +303,12 @@
         "message": "={{ $json.markdown }}",
         "options": {
           "attachments": "data"
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "[CONFIGURE_ME]",
+          "name": "SMTP account"
         }
       }
     },
@@ -311,6 +329,12 @@
           "__rl": true,
           "mode": "list",
           "value": "My Drive"
+        }
+      },
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "[CONFIGURE_ME]",
+          "name": "Google Docs account"
         }
       }
     },
