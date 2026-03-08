@@ -19,6 +19,7 @@ examples/QA_Instructor_Guide.md
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # Logs
 *.log
