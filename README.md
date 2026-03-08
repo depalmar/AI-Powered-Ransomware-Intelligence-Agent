@@ -8,7 +8,7 @@
 
 **Author:** Raymond DePalma &nbsp;|&nbsp; Companion to the **SANS Ransomware Intelligence Webinar**
 
-Automated threat intelligence pipelines that continuously monitor ransomware leak sites, run AI-powered analysis, and deliver rich interactive reports — to Slack, Google Docs, email, and your SIEM.
+Automated threat intelligence pipelines that continuously monitor ransomware leak sites, run AI-powered analysis, and deliver rich interactive reports — to Slack, Google Docs, and email.
 
 ---
 
