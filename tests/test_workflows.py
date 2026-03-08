@@ -278,6 +278,23 @@ class TestContentChecks:
             f"{os.path.basename(path)}: workflow name references removed 300-level"
         )
 
+    def test_no_empty_credential_ids(self, workflow_file):
+        """
+        Credentials with empty IDs cause n8n to reject the workflow at execution time.
+        THIS TEST CATCHES THE BUG WHERE n8n REFUSED TO EXECUTE DUE TO EMPTY CRED IDS.
+        """
+        path, data = workflow_file
+        broken = []
+        for node in data.get("nodes", []):
+            name = node.get("name", "?")
+            creds = node.get("credentials", {})
+            for cred_type, cred_val in creds.items():
+                if isinstance(cred_val, dict) and not cred_val.get("id"):
+                    broken.append(f"{name}: credential '{cred_type}' has empty id")
+        assert not broken, (
+            f"{os.path.basename(path)}: empty credential IDs block execution: {broken}"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Test: JavaScript code node integrity

@@ -106,7 +106,16 @@
       "parameters": {
         "method": "GET",
         "url": "=https://www.virustotal.com/api/v3/domains/{{$json.value}}",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "={{ $vars.VT_API_KEY || '' }}"
+            }
+          ]
+        }
       }
     },
     {
@@ -121,7 +130,20 @@
       "parameters": {
         "method": "GET",
         "url": "=https://api.abuseipdb.com/api/v2/check?ipAddress={{$json.value}}&maxAgeInDays=90",
-        "options": {}
+        "options": {},
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Key",
+              "value": "={{ $vars.ABUSEIPDB_API_KEY || '' }}"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        }
       }
     },
     {
@@ -186,12 +208,6 @@
         "options": {
           "thinking": true
         }
-      },
-      "credentials": {
-        "anthropicApi": {
-          "id": "",
-          "name": "Anthropic account"
-        }
       }
     },
     {
@@ -249,12 +265,6 @@
         "channel": "={{ $vars.SLACK_CHANNEL || '#threat-intel' }}",
         "text": "={{ $json.slack_text }}",
         "otherOptions": {}
-      },
-      "credentials": {
-        "slackOAuth2Api": {
-          "id": "",
-          "name": "Slack account"
-        }
       }
     },
     {
@@ -273,12 +283,6 @@
         "message": "={{ $json.markdown }}",
         "options": {
           "attachments": "data"
-        }
-      },
-      "credentials": {
-        "smtp": {
-          "id": "",
-          "name": "SMTP account"
         }
       }
     },
@@ -299,12 +303,6 @@
           "__rl": true,
           "mode": "list",
           "value": "My Drive"
-        }
-      },
-      "credentials": {
-        "googleDocsOAuth2Api": {
-          "id": "",
-          "name": "Google Docs account"
         }
       }
     },
