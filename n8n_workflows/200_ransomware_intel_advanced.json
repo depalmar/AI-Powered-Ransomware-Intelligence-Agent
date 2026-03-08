@@ -11,7 +11,7 @@
         -400
       ],
       "parameters": {
-        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n**PRIVATE \u2014 WEBINAR ATTENDEES ONLY**\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
+        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
         "height": 450,
         "width": 500,
         "color": 1
@@ -324,7 +324,165 @@
       }
     }
   ],
-  "connections": {},
+  "connections": {
+    "Every 6 Hours": {
+      "main": [
+        [
+          {
+            "node": "Fetch Recent Victims",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fetch MITRE Groups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Recent Victims": {
+      "main": [
+        [
+          {
+            "node": "Filter & Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter & Deduplicate": {
+      "main": [
+        [
+          {
+            "node": "Extract IOCs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract IOCs": {
+      "main": [
+        [
+          {
+            "node": "VirusTotal IOC Lookup",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AbuseIPDB Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "VirusTotal IOC Lookup": {
+      "main": [
+        [
+          {
+            "node": "Enrich Victim Data with IOC Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrich Victim Data with IOC Results": {
+      "main": [
+        [
+          {
+            "node": "Build Historical Baseline",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Historical Baseline": {
+      "main": [
+        [
+          {
+            "node": "Threat Intelligence AI Agent (Advanced)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude Model (Advanced)": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Threat Intelligence AI Agent (Advanced)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Advanced TTP + YARA Output": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Threat Intelligence AI Agent (Advanced)",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Threat Intelligence AI Agent (Advanced)": {
+      "main": [
+        [
+          {
+            "node": "Generate YARA Rules File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate YARA Rules File": {
+      "main": [
+        [
+          {
+            "node": "Output Enhanced HTML (v200)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Output Enhanced HTML (v200)": {
+      "main": [
+        [
+          {
+            "node": "Slack Alert (Advanced)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Email Report",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Create JIRA Ticket (P1 only)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Google Doc Report (Advanced)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
   "settings": {
     "executionOrder": "v1"
   },
