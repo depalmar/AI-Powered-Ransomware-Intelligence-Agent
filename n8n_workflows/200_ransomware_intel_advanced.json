@@ -105,8 +105,14 @@
       ],
       "parameters": {
         "method": "GET",
-        "url": "=https://www.virustotal.com/api/v3/domains/{{$json.value}}",
-        "options": {},
+        "url": "=https://www.virustotal.com/api/v3/{{ $json.type === \"ip\" ? \"ip_addresses\" : \"domains\" }}/{{ $json.value }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -116,7 +122,8 @@
             }
           ]
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "id": "c2d267db-1acc-4f1f-bd5b-743a5248c0d4",
@@ -144,7 +151,8 @@
             }
           ]
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "id": "d8ef1069-fe23-4ff1-b4a3-492d313cc894",
@@ -183,7 +191,7 @@
       ],
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.markdown }}",
+        "text": "=Analyze the following ransomware threat landscape data and produce a structured intelligence report.\n\nBaseline comparison:\n- Current period victim count: {{ $json.current }}\n- Prior period victim count: {{ $json.prior }}\n- Change: {{ $json.delta_pct }}%\n- Trend: {{ $json.trend }}\n\nProvide your analysis as structured JSON matching the output schema.",
         "hasOutputParser": true,
         "options": {
           "systemMessage": "You are an elite threat intelligence analyst. Respond with structured JSON only."
