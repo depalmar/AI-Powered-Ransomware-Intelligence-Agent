@@ -11,7 +11,7 @@
         -400
       ],
       "parameters": {
-        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n**PRIVATE \u2014 WEBINAR ATTENDEES ONLY**\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
+        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
         "height": 450,
         "width": 500,
         "color": 1
