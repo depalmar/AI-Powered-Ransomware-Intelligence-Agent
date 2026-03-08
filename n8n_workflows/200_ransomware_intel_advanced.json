@@ -11,7 +11,7 @@
         -400
       ],
       "parameters": {
-        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Automated Ticketing**: Creates JIRA/ServiceNow tickets for P1 threats\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email\n- Optional: JIRA/ServiceNow credentials",
+        "content": "## 🔴 Level 200 — Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Webhook\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email",
         "height": 450,
         "width": 500,
         "color": 1
@@ -78,7 +78,7 @@
         0
       ],
       "parameters": {
-        "jsCode": "// Filter by monitored industries + deduplicate victims\nconst victims = $input.all()[0].json || [];\nconst industries = ['Healthcare', 'Manufacturing', 'Financial', 'Education', 'Government'];\nreturn victims\n  .filter(v => industries.some(i => v.activity?.toLowerCase().includes(i.toLowerCase())))\n  .slice(0, 100)\n  .map(v => ({ json: v }));"
+        "jsCode": "// Filter by monitored industries + deduplicate victims\n// n8n wraps each API response item as {json: record}, so .all() is the array\nconst items = \\.all();\nconst industries = ['Healthcare', 'Manufacturing', 'Financial', 'Education', 'Government'];\nconst seen = new Set();\nconst filtered = [];\nfor (const item of items) {\n  const v = item.json;\n  // Handle both array-wrapped and individual item responses\n  const records = Array.isArray(v) ? v : [v];\n  for (const rec of records) {\n    const key = rec.post_title || rec.name || JSON.stringify(rec);\n    if (seen.has(key)) continue;\n    seen.add(key);\n    const activity = (rec.activity || rec.post_title || '').toLowerCase();\n    if (industries.some(i => activity.includes(i.toLowerCase()))) {\n      filtered.push({ json: rec });\n    }\n  }\n}\nreturn filtered.slice(0, 100);"
       }
     },
     {
@@ -257,33 +257,10 @@
       "parameters": {
         "fromEmail": "={{ $vars.FROM_EMAIL }}",
         "toEmail": "={{ $vars.TO_EMAIL }}",
-        "subject": "Ransomware Intel Brief \u2014 {{ $json.report_id }}",
+        "subject": "Ransomware Intel Brief — {{ $json.report_id }}",
         "message": "={{ $json.markdown }}",
         "options": {
           "attachments": "data"
-        }
-      }
-    },
-    {
-      "id": "692e3cc6-ec17-4b9f-8956-5f57705acd6e",
-      "name": "Create JIRA Ticket (P1 only)",
-      "type": "n8n-nodes-base.jira",
-      "typeVersion": 1,
-      "position": [
-        2400,
-        100
-      ],
-      "parameters": {
-        "resource": "issue",
-        "operation": "create",
-        "project": "={{ $vars.JIRA_PROJECT }}",
-        "summary": "P1 Ransomware Alert \u2014 {{ $json.threat_level }}",
-        "description": "={{ $json.slack_text }}",
-        "issueType": "Bug",
-        "additionalFields": {
-          "priority": {
-            "name": "Critical"
-          }
         }
       }
     },
@@ -298,7 +275,7 @@
       ],
       "parameters": {
         "operation": "create",
-        "title": "=Ransomware Intel Brief \u2014 {{ $json.report_id }}",
+        "title": "=Ransomware Intel Brief — {{ $json.report_id }}",
         "content": "={{ $json.markdown }}",
         "driveId": {
           "__rl": true,
@@ -317,10 +294,23 @@
         -300
       ],
       "parameters": {
-        "content": "### 200-Level Workflow Architecture\n\n**New Capabilities:**\n1. **IOC Enrichment** \u2014 VT + AbuseIPDB lookups\n2. **YARA Rule Generation** \u2014 AI-generated per-group rules\n3. **Historical Trending** \u2014 30d vs prior 30d comparison  \n4. **Multi-Channel Delivery** \u2014 Slack + Email + JIRA + Google Docs\n5. **Confidence Scoring** \u2014 0-100% attribution confidence\n6. **Negotiation Intelligence** \u2014 Demand ranges and decryptor info\n\n**Data Flow:**\nSchedule \u2192 API Fetch \u2192 IOC Extract \u2192 Enrich \u2192 AI Analysis (+ YARA) \u2192 HTML + YARA File \u2192 All Outputs",
+        "content": "### 200-Level Workflow Architecture\n\n**New Capabilities:**\n1. **IOC Enrichment** — VT + AbuseIPDB lookups\n2. **YARA Rule Generation** — AI-generated per-group rules\n3. **Historical Trending** — 30d vs prior 30d comparison  \n4. **Multi-Channel Delivery** — Slack + Email + Google Docs\n5. **Confidence Scoring** — 0-100% attribution confidence\n6. **Negotiation Intelligence** — Demand ranges and decryptor info\n\n**Data Flow:**\nSchedule → API Fetch → IOC Extract → Enrich → AI Analysis (+ YARA) → HTML + YARA File → All Outputs",
         "height": 340,
         "width": 480,
         "color": 3
+      }
+    },
+    {
+      "id": "ff4c8486-40f3-4f8d-b4ae-02781abd7414",
+      "name": "Extract TTPs & IOCs from Groups",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        480,
+        120
+      ],
+      "parameters": {
+        "jsCode": "// Extract MITRE TTPs, tools, and IOC indicators from ransomware.live group data\n// This pulls structured threat intel already embedded in the groups API response\nconst items = \\.all();\nconst allTTPs = [];\nconst allTools = [];\nconst allIOCs = [];\n\nfor (const item of items) {\n  const g = Array.isArray(item.json) ? item.json : [item.json];\n  for (const group of g) {\n    const name = group.name || 'Unknown';\n\n    // Extract MITRE TTPs\n    if (group.ttps && Array.isArray(group.ttps)) {\n      for (const ttp of group.ttps) {\n        allTTPs.push({\n          group: name,\n          tactic: ttp.tactic || '',\n          technique: ttp.technique || '',\n          technique_id: ttp.technique_id || '',\n          details: ttp.technique_details || ''\n        });\n      }\n    }\n\n    // Extract tools used by groups\n    if (group.tools && typeof group.tools === 'object') {\n      for (const [category, tools] of Object.entries(group.tools)) {\n        const toolList = Array.isArray(tools) ? tools : [tools];\n        for (const tool of toolList) {\n          allTools.push({ group: name, category, tool: typeof tool === 'string' ? tool : tool.name || String(tool) });\n        }\n      }\n    }\n\n    // Extract IOCs: BTC addresses, known domains from locations\n    if (group.btc_address) {\n      const addrs = Array.isArray(group.btc_address) ? group.btc_address : [group.btc_address];\n      for (const addr of addrs) {\n        if (addr) allIOCs.push({ group: name, type: 'btc_address', value: addr });\n      }\n    }\n    if (group.locations && Array.isArray(group.locations)) {\n      for (const loc of group.locations) {\n        if (loc.fqdn) allIOCs.push({ group: name, type: 'domain', value: loc.fqdn });\n      }\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ttp_count: allTTPs.length,\n    tool_count: allTools.length,\n    ioc_count: allIOCs.length,\n    ttps: allTTPs.slice(0, 50),\n    tools: allTools.slice(0, 50),\n    iocs: allIOCs.slice(0, 50)\n  }\n}];"
       }
     }
   ],
@@ -357,6 +347,11 @@
         [
           {
             "node": "Filter & Deduplicate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract TTPs & IOCs from Groups",
             "type": "main",
             "index": 0
           }
@@ -492,12 +487,18 @@
             "index": 0
           },
           {
-            "node": "Create JIRA Ticket (P1 only)",
+            "node": "Google Doc Report (Advanced)",
             "type": "main",
             "index": 0
-          },
+          }
+        ]
+      ]
+    },
+    "Extract TTPs & IOCs from Groups": {
+      "main": [
+        [
           {
-            "node": "Google Doc Report (Advanced)",
+            "node": "Build Historical Baseline",
             "type": "main",
             "index": 0
           }
