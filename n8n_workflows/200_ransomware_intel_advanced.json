@@ -352,6 +352,17 @@
         ]
       ]
     },
+    "Fetch MITRE Groups": {
+      "main": [
+        [
+          {
+            "node": "Filter & Deduplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Filter & Deduplicate": {
       "main": [
         [
@@ -380,6 +391,17 @@
       ]
     },
     "VirusTotal IOC Lookup": {
+      "main": [
+        [
+          {
+            "node": "Enrich Victim Data with IOC Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AbuseIPDB Lookup": {
       "main": [
         [
           {
