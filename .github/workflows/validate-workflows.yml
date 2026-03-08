@@ -4,12 +4,16 @@ on:
   push:
     paths:
       - 'n8n_workflows/**/*.json'
+      - 'tests/**'
+      - '.github/workflows/validate-workflows.yml'
   pull_request:
     paths:
       - 'n8n_workflows/**/*.json'
+      - 'tests/**'
+      - '.github/workflows/validate-workflows.yml'
 
 jobs:
-  validate-json:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,42 +22,8 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Validate workflow JSON files
-        run: |
-          python -c "
-          import json, sys, glob
+      - name: Install pytest
+        run: pip install pytest
 
-          errors = []
-          files = glob.glob('n8n_workflows/*.json')
-
-          if not files:
-              print('No workflow JSON files found.')
-              sys.exit(1)
-
-          for f in files:
-              try:
-                  with open(f, 'r', encoding='utf-8') as fh:
-                      data = json.load(fh)
-
-                  # Verify required n8n workflow keys
-                  for key in ('name', 'nodes'):
-                      if key not in data:
-                          errors.append(f'{f}: missing required key \"{key}\"')
-
-                  node_count = len(data.get('nodes', []))
-                  conn_count = len(data.get('connections', {}))
-                  print(f'  {f}: {node_count} nodes, {conn_count} connections')
-
-              except json.JSONDecodeError as e:
-                  errors.append(f'{f}: invalid JSON - {e}')
-              except Exception as e:
-                  errors.append(f'{f}: error - {e}')
-
-          if errors:
-              print('\nValidation errors:')
-              for err in errors:
-                  print(f'  {err}')
-              sys.exit(1)
-          else:
-              print(f'\nAll {len(files)} workflow files are valid.')
-          "
+      - name: Run workflow validation tests
+        run: pytest tests/ -v --tb=short
