@@ -12,6 +12,24 @@ Automated threat intelligence pipelines that continuously monitor ransomware lea
 
 ---
 
+## 🖼️ Preview
+
+### n8n Workflow
+![n8n Workflow](screenshots/n8n_workflow.png)
+
+### HTML Report — Dashboard
+![Dashboard KPIs](screenshots/html_report_dashboard.png)
+
+### HTML Report — Charts & Analysis
+![Charts](screenshots/html_report_charts.png)
+![Analysis](screenshots/html_report_analysis.png)
+
+### HTML Report — Lifecycle & Mindmap
+![Lifecycle](screenshots/html_report_lifecycle.png)
+![Mindmap](screenshots/html_report_mindmap.png)
+
+---
+
 ## 📊 Workflow Progression
 
 | Level | File | LLM | Key Capabilities | Visibility |
