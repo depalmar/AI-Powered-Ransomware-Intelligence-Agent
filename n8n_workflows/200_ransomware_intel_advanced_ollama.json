@@ -11,7 +11,7 @@
         -400
       ],
       "parameters": {
-        "content": "## 🔴 Level 200 — Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Google Docs\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email",
+        "content": "## \ud83d\udd34 Level 200 \u2014 Advanced Ransomware Intelligence Platform\n\n### What's New vs 101\n- **IOC Enrichment**: VirusTotal + AbuseIPDB lookups on victim domains/IPs\n- **YARA Rule Generation**: AI generates detection rules per threat group\n- **Historical Trending**: Compares current period vs prior 30-day baseline\n- **Multi-Channel Delivery**: Slack + Email + Google Docs\n- **Confidence Scoring**: Multi-signal weighted attribution score\n\n### Prerequisites\n- VirusTotal API key (free tier: 500 req/day)\n- AbuseIPDB API key (free tier available)\n- SMTP or SendGrid for email",
         "height": 450,
         "width": 500,
         "color": 1
@@ -238,6 +238,12 @@
         "channel": "={{ $vars.SLACK_CHANNEL || '#threat-intel' }}",
         "text": "={{ $json.slack_text }}",
         "otherOptions": {}
+      },
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
       }
     },
     {
@@ -252,10 +258,16 @@
       "parameters": {
         "fromEmail": "={{ $vars.FROM_EMAIL }}",
         "toEmail": "={{ $vars.TO_EMAIL }}",
-        "subject": "Ransomware Intel Brief — {{ $json.report_id }}",
+        "subject": "Ransomware Intel Brief \u2014 {{ $json.report_id }}",
         "message": "={{ $json.markdown }}",
         "options": {
           "attachments": "data"
+        }
+      },
+      "credentials": {
+        "smtp": {
+          "id": "",
+          "name": "SMTP account"
         }
       }
     },
@@ -270,12 +282,18 @@
       ],
       "parameters": {
         "operation": "create",
-        "title": "=Ransomware Intel Brief — {{ $json.report_id }}",
+        "title": "=Ransomware Intel Brief \u2014 {{ $json.report_id }}",
         "content": "={{ $json.markdown }}",
         "driveId": {
           "__rl": true,
           "mode": "list",
           "value": "My Drive"
+        }
+      },
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "",
+          "name": "Google Docs account"
         }
       }
     },
@@ -289,7 +307,7 @@
         -300
       ],
       "parameters": {
-        "content": "### 200-Level Workflow Architecture\n\n**New Capabilities:**\n1. **IOC Enrichment** — VT + AbuseIPDB lookups\n2. **YARA Rule Generation** — AI-generated per-group rules\n3. **Historical Trending** — 30d vs prior 30d comparison  \n4. **Multi-Channel Delivery** — Slack + Email + Google Docs\n5. **Confidence Scoring** — 0-100% attribution confidence\n6. **Negotiation Intelligence** — Demand ranges and decryptor info\n\n**Data Flow:**\nSchedule → API Fetch → IOC Extract → Enrich → AI Analysis (+ YARA) → HTML + YARA File → All Outputs",
+        "content": "### 200-Level Workflow Architecture\n\n**New Capabilities:**\n1. **IOC Enrichment** \u2014 VT + AbuseIPDB lookups\n2. **YARA Rule Generation** \u2014 AI-generated per-group rules\n3. **Historical Trending** \u2014 30d vs prior 30d comparison  \n4. **Multi-Channel Delivery** \u2014 Slack + Email + Google Docs\n5. **Confidence Scoring** \u2014 0-100% attribution confidence\n6. **Negotiation Intelligence** \u2014 Demand ranges and decryptor info\n\n**Data Flow:**\nSchedule \u2192 API Fetch \u2192 IOC Extract \u2192 Enrich \u2192 AI Analysis (+ YARA) \u2192 HTML + YARA File \u2192 All Outputs",
         "height": 340,
         "width": 480,
         "color": 3
@@ -306,6 +324,19 @@
       ],
       "parameters": {
         "jsCode": "// Extract MITRE TTPs, tools, and IOC indicators from ransomware.live group data\n// This pulls structured threat intel already embedded in the groups API response\nconst items = \\.all();\nconst allTTPs = [];\nconst allTools = [];\nconst allIOCs = [];\n\nfor (const item of items) {\n  const g = Array.isArray(item.json) ? item.json : [item.json];\n  for (const group of g) {\n    const name = group.name || 'Unknown';\n\n    // Extract MITRE TTPs\n    if (group.ttps && Array.isArray(group.ttps)) {\n      for (const ttp of group.ttps) {\n        allTTPs.push({\n          group: name,\n          tactic: ttp.tactic || '',\n          technique: ttp.technique || '',\n          technique_id: ttp.technique_id || '',\n          details: ttp.technique_details || ''\n        });\n      }\n    }\n\n    // Extract tools used by groups\n    if (group.tools && typeof group.tools === 'object') {\n      for (const [category, tools] of Object.entries(group.tools)) {\n        const toolList = Array.isArray(tools) ? tools : [tools];\n        for (const tool of toolList) {\n          allTools.push({ group: name, category, tool: typeof tool === 'string' ? tool : tool.name || String(tool) });\n        }\n      }\n    }\n\n    // Extract IOCs: BTC addresses, known domains from locations\n    if (group.btc_address) {\n      const addrs = Array.isArray(group.btc_address) ? group.btc_address : [group.btc_address];\n      for (const addr of addrs) {\n        if (addr) allIOCs.push({ group: name, type: 'btc_address', value: addr });\n      }\n    }\n    if (group.locations && Array.isArray(group.locations)) {\n      for (const loc of group.locations) {\n        if (loc.fqdn) allIOCs.push({ group: name, type: 'domain', value: loc.fqdn });\n      }\n    }\n  }\n}\n\nreturn [{\n  json: {\n    ttp_count: allTTPs.length,\n    tool_count: allTools.length,\n    ioc_count: allIOCs.length,\n    ttps: allTTPs.slice(0, 50),\n    tools: allTools.slice(0, 50),\n    iocs: allIOCs.slice(0, 50)\n  }\n}];"
+      }
+    },
+    {
+      "id": "d74ea7b5-4518-4246-bdd6-8bc6cb6fa915",
+      "name": "Output HTML File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2400,
+        350
+      ],
+      "parameters": {
+        "jsCode": "// Output HTML report as a downloadable file\n// This allows users to view the report even without Slack/Email/Docs configured\nconst items = \\.all();\nconst d = items[0].json;\n\n// Build the HTML content from upstream data\nconst html = d.html || d.html_content || d.enhanced_html || '<html><body><h1>Ransomware Intelligence Report</h1><p>No HTML content was generated upstream. Check the Output Enhanced HTML node.</p></body></html>';\n\nconst ts = new Date().toISOString().replace(/[:.]/g, \"-\").split(\"T\");\nconst fileName = ;\n\n// Return as binary so n8n shows a download link in the execution results\nconst buf = Buffer.from(html, \"utf-8\");\nreturn [{\n  json: { status: \"html_file_generated\", fileName },\n  binary: {\n    data: {\n      data: buf.toString(\"base64\"),\n      mimeType: \"text/html\",\n      fileName: fileName\n    }\n  }\n}];"
       }
     }
   ],
@@ -483,6 +514,11 @@
           },
           {
             "node": "Google Doc Report (Advanced)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Output HTML File",
             "type": "main",
             "index": 0
           }
