@@ -1,6 +1,6 @@
 # n8n Ransomware Intelligence Workflows
 
-Three-tier workflow progression from beginner automation to enterprise attribution platform.
+Two-tier workflow progression from beginner automation to advanced intelligence platform.
 
 ## Workflow Progression
 
@@ -10,9 +10,6 @@ Three-tier workflow progression from beginner automation to enterprise attributi
 | **101 (Ollama)** | `101_ransomware_threat_monitor_ollama.json` | Ollama / Local | Beginner | ✅ Public |
 | **200** | `200_ransomware_intel_advanced.json` | Claude | Intermediate | ✅ Public |
 | **200 (Ollama)** | `200_ransomware_intel_advanced_ollama.json` | Ollama / Local | Intermediate | ✅ Public |
-| **300** | `300_ransomware_attribution_platform.json` | Claude Opus | Advanced | 🔒 Private Repo |
-
-> **Level 300** is available in a separate private repository for webinar attendees. See the webinar details for access instructions.
 
 ---
 
@@ -42,7 +39,7 @@ Two variants are provided:
 
 | Feature | Claude (101) | Ollama (101) |
 |---------|-------------|--------------|
-| LLM | Anthropic Claude Opus | llama3.1 / mistral / gemma2 |
+| LLM | Anthropic Claude Sonnet | llama3.1 / mistral / gemma2 |
 | Cost | API credits | Free (local) |
 | Quality | Higher, more consistent | Good, varies by model |
 | Privacy | Data sent to Anthropic | Fully local |
@@ -75,26 +72,6 @@ Two variants are provided:
 - AbuseIPDB API key (free tier available)
 - SMTP or SendGrid for email delivery
 - JIRA credentials (optional)
-
----
-
-## 300 — Attribution Platform (Advanced)
-
-> **🔒 Available to webinar attendees. Contact for access.**
-
-**Adds vs 200:**
-- 🧬 **Multi-Signal Attribution Engine** — Ransom note similarity + IOC overlap + TTP alignment + file extension fingerprinting
-- 📚 **Threat Actor Profiling DB** — Evolving actor profiles stored in Airtable
-- 🔭 **SIEM Integration** — CEF/JSON events pushed to Splunk / Elastic / Microsoft Sentinel
-- 🎯 **Active Threat Hunting** — Generates Splunk SPL + KQL hunting queries
-- 📋 **IR Playbook Generation** — Actor-specific incident response playbook
-- 📊 **Executive Dashboard** — Auto-updates Google Sheets KPI dashboard
-- 📡 **STIX/TAXII Export** — STIX 2.1 bundles for MISP/OpenCTI sharing
-
-**Additional prerequisites:**
-- SIEM API credentials (Splunk/Elastic/Sentinel)
-- Airtable or Notion API for actor profiling
-- Optional: MISP/OpenCTI for threat sharing
 
 ---
 

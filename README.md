@@ -1,7 +1,7 @@
 # 🛡️ AI-Powered Ransomware Intelligence Agent (n8n Workflows)
 
 [![n8n.io](https://img.shields.io/badge/n8n-Automation-F04747?logo=n8n&logoColor=white)](https://n8n.io/)
-[![Claude](https://img.shields.io/badge/AI-Claude_Opus-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
+[![Claude](https://img.shields.io/badge/AI-Claude_Sonnet-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/)
 [![Ollama](https://img.shields.io/badge/Local_LLM-Ollama-000000?logo=ollama&logoColor=white)](https://ollama.ai/)
 [![Ransomware.live](https://img.shields.io/badge/Data-Ransomware.live-000000?logo=json&logoColor=white)](https://ransomware.live/)
 [![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc/4.0/)
@@ -16,13 +16,10 @@ Automated threat intelligence pipelines that continuously monitor ransomware lea
 
 | Level | File | LLM | Key Capabilities | Visibility |
 |-------|------|-----|-----------------|------------|
-| **101** | `101_ransomware_threat_monitor.json` | Claude Opus | Monitor → AI analysis → HTML + Slack report | ✅ Public |
+| **101** | `101_ransomware_threat_monitor.json` | Claude Sonnet | Monitor → AI analysis → HTML + Slack report | ✅ Public |
 | **101 (Ollama)** | `101_ransomware_threat_monitor_ollama.json` | Ollama (local) | Same as 101, fully local — no API costs | ✅ Public |
-| **200** | `200_ransomware_intel_advanced.json` | Claude Opus | + IOC enrichment, YARA rules, historical trending, email + JIRA | ✅ Public |
+| **200** | `200_ransomware_intel_advanced.json` | Claude Sonnet | + IOC enrichment, YARA rules, historical trending, email + JIRA | ✅ Public |
 | **200 (Ollama)** | `200_ransomware_intel_advanced_ollama.json` | Ollama (local) | Same as 200, fully local | ✅ Public |
-| **300** | `300_ransomware_attribution_platform.json` | Claude Opus | + Multi-signal attribution, SIEM integration, IR playbooks, STIX export | 🔒 Webinar |
-
-> **Level 300** is available to webinar attendees in a separate private repository.
 
 ---
 
